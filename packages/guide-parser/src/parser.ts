@@ -1,6 +1,5 @@
 import { load as cheerioLoad, type CheerioAPI, type Cheerio } from "cheerio";
 import { readFile } from "node:fs/promises";
-import { basename } from "node:path";
 import { createLogger } from "@lexy/logger";
 import type {
   InstallTask,
@@ -21,11 +20,17 @@ export interface ParseResult {
 /**
  * Parse a single cached HTML guide page into InstallTask[].
  *
- * The parser is deliberately rule-based (CSS selectors + text patterns)
- * so it stays deterministic and testable.
+ * The Lexy guide uses a custom WordPress plugin ("lotd-plus") that renders
+ * mod entries in a very structured DOM.  Each mod is wrapped in a
+ * `<div class="mod-item">` container with well-defined sub-elements:
  *
- * NOTE: The exact selectors below are a *best-effort first pass*. After
- * fetching real snapshots we'll refine them against the actual markup.
+ *  - `h3.av-special-heading-tag`  → mod title
+ *  - `div.mod-subheading`         → nexus link, version badge, author badge, tags
+ *  - `div.mod-files`              → files to download (category + name + version)
+ *  - `div.fomod-toggle`           → FOMOD installer instructions
+ *  - `div.mod-special-instructions` → special post-install steps
+ *
+ * Section headings (`h2.av-special-heading-tag`) group mods into categories.
  */
 export async function parsePage(
   htmlPath: string,
@@ -47,54 +52,73 @@ export function parseHtml(
 
   let orderIndex = startOrderIndex;
 
-  // The Lexy guide uses a WordPress theme. Mod entries are typically
-  // rendered in content sections. We'll look for common patterns:
-  //   - <h3> or <h2> section headers
-  //   - Mod "cards" or table rows with download links
-  //
-  // This initial implementation scans for links to nexusmods.com as
-  // anchor points, then works outward to find mod context.
+  // Track the current h2 section title
+  let currentSection = "Unknown Section";
 
-  // Strategy: find all section headings, then within each section
-  // look for file entries / nexus links.
+  // Walk all content in order: detect section headings and mod-item blocks.
+  // Section headings are h2 elements inside `.av-special-heading-h2`.
+  $("h2.av-special-heading-tag").each((_i, el) => {
+    const heading = $(el).text().trim();
+    if (heading) currentSection = heading;
+  });
 
-  const headings = $("h2, h3");
+  // The primary extraction target: every div.mod-item in the page.
+  const modItems = $("div.mod-item");
+  log.debug({ pageSlug, modItemCount: modItems.length }, "found mod-items");
 
-  headings.each((_i, el) => {
-    const $heading = $(el);
-    const sectionTitle = $heading.text().trim();
-    if (!sectionTitle) return;
+  modItems.each((_i, el) => {
+    const $mod = $(el);
 
-    // Collect all content between this heading and the next heading
-    const sectionContent = collectSectionContent($, $heading);
-
-    // Find nexus links in section
-    const nexusLinks = sectionContent.find('a[href*="nexusmods.com"]');
-    if (nexusLinks.length === 0) return;
-
-    // Try to extract mod title — use heading or first strong/bold text
-    const modTitle = sectionTitle;
-
-    // Extract file entries from the section
-    const fileEntries = extractFileEntries($, sectionContent, diagnostics, pageSlug);
-    if (fileEntries.length === 0) {
-      // Attempt basic extraction from links only
-      const basicEntries = extractBasicFileEntries($, nexusLinks);
-      if (basicEntries.length === 0) return;
-      fileEntries.push(...basicEntries);
+    // ── Mod title ──────────────────────────────────────────────────────
+    const modTitle = $mod.find("h3.av-special-heading-tag").first().text().trim();
+    if (!modTitle) {
+      diagnostics.push({
+        severity: "warn",
+        pageSlug,
+        message: `mod-item at position ${_i} has no h3 title`,
+      });
+      return; // skip un-parseable entries
     }
 
-    // Determine install mode hint
+    // ── Determine which section this mod belongs to ────────────────────
+    // Walk backwards through preceding siblings / parents to find the
+    // closest h2 heading.  Because mod-items are inside code-block
+    // sections which are siblings of h2 headings.
+    const sectionTitle = findParentSectionTitle($, $mod) || currentSection;
+
+    // ── Nexus link & badges from .mod-subheading ───────────────────────
+    const $subheading = $mod.find("div.mod-subheading").first();
+    const nexusLink = $subheading.find('a[href*="nexusmods.com"]').first().attr("href") ?? undefined;
+    const nexusIds = nexusLink ? parseNexusUrl(nexusLink) : undefined;
+
+    // Version from badge img src (e.g. "Version-1.11-informational")
+    const versionBadge = extractBadgeValue($, $subheading, "Version");
+
+    // ── Tags from .mod-tags ────────────────────────────────────────────
+    const tags = extractTags($, $subheading);
+
+    // ── File entries from .mod-files ───────────────────────────────────
+    const fileEntries = extractFileEntries($, $mod, nexusIds, diagnostics, pageSlug, modTitle);
+
+    if (fileEntries.length === 0) {
+      diagnostics.push({
+        severity: "info",
+        pageSlug,
+        message: `mod "${modTitle}" has no downloadable file entries`,
+      });
+    }
+
+    // ── FOMOD instructions ─────────────────────────────────────────────
+    const fomod = extractFomodInstructions($, $mod);
+
+    // ── Special instructions ───────────────────────────────────────────
+    const specialInstructions = extractSpecialInstructions($, $mod);
+
+    // ── Install mode hint ──────────────────────────────────────────────
     const installModeHint = determineInstallMode(fileEntries);
 
-    // Extract FOMOD instructions
-    const fomod = extractFomodInstructions($, sectionContent);
-
-    // Extract special instructions
-    const specialInstructions = extractSpecialInstructions($, sectionContent);
-
-    // Extract tags
-    const tags = extractTags($, sectionContent);
+    // ── Build the anchor ID (e.g. #address-library-for-skse-plugins) ──
+    const anchorId = $mod.find(".av-special-heading").first().attr("id") ?? undefined;
 
     const task: InstallTask = {
       id: `${pageSlug}-${orderIndex}`,
@@ -107,7 +131,12 @@ export function parseHtml(
       fomod: fomod.length > 0 ? fomod : undefined,
       specialInstructions: specialInstructions.length > 0 ? specialInstructions : undefined,
       installModeHint,
-      sourceRefs: [{ pageSlug, locatorText: sectionTitle }],
+      sourceRefs: [
+        {
+          pageSlug,
+          locatorText: anchorId ?? modTitle,
+        },
+      ],
     };
 
     tasks.push(task);
@@ -120,70 +149,111 @@ export function parseHtml(
 
 // ── Internal helpers ─────────────────────────────────────────────────
 
-function collectSectionContent($: CheerioAPI, $heading: Cheerio<any>): Cheerio<any> {
-  const elements: any[] = [];
-  let $next = $heading.next();
+/**
+ * Walk previous siblings / ancestors to locate the nearest h2 section heading.
+ */
+function findParentSectionTitle($: CheerioAPI, $mod: Cheerio<any>): string | undefined {
+  // Mod-items live inside avia_codeblock_section → flex_column → etc.
+  // The h2 is a sibling of the code-block wrapper at the same level.
+  // Walk up to the nearest `av_one_full` or `avia_codeblock_section` and
+  // then check previous siblings for h2.
+  let $cursor = $mod.closest(".avia_codeblock_section, .av_one_full, [class*='flex_column']");
+  let limit = 20;
 
-  while ($next.length > 0 && !$next.is("h2, h3")) {
-    elements.push($next[0]!);
-    $next = $next.next();
+  while ($cursor.length > 0 && limit-- > 0) {
+    // Check all previous siblings for h2 headings
+    let $prev = $cursor.prev();
+    while ($prev.length > 0) {
+      const h2 = $prev.find("h2.av-special-heading-tag").text().trim();
+      if (h2) return h2;
+      // Also check if the element itself is an h2 wrapper
+      if ($prev.hasClass("av-special-heading-h2")) {
+        const directH2 = $prev.find("h2").text().trim();
+        if (directH2) return directH2;
+      }
+      $prev = $prev.prev();
+    }
+    // Go one level up and keep searching
+    $cursor = $cursor.parent();
   }
 
-  return $(elements);
+  return undefined;
 }
 
+/**
+ * Extract a badge value from shields.io img src URLs.
+ * e.g. `img[src*="shields.io/badge/Version-1.11-informational"]` → "1.11"
+ */
+function extractBadgeValue($: CheerioAPI, $container: Cheerio<any>, label: string): string | undefined {
+  let value: string | undefined;
+  $container.find("img").each((_i, el) => {
+    const src = $(el).attr("src") ?? "";
+    // Pattern: /badge/Label-Value-color.svg
+    const regex = new RegExp(`badge/${label}-([^-]+)`, "i");
+    const match = src.match(regex);
+    if (match) {
+      value = decodeURIComponent(match[1]!.replace(/\.svg$/, "")).trim();
+    }
+  });
+  return value;
+}
+
+/**
+ * Extract tags from `.mod-tags` badge searchable spans.
+ */
+function extractTags($: CheerioAPI, $subheading: Cheerio<any>): string[] {
+  const tags: string[] = [];
+  $subheading.find("span.mod-tags span.lotd-shield-searchable").each((_i, el) => {
+    const text = $(el).text().trim();
+    if (text) tags.push(text);
+  });
+  return tags;
+}
+
+/**
+ * Extract file entries from .mod-files blocks inside a mod-item.
+ * Each file entry has:
+ *  - `.mod-file-item-category`  → file category (Main Files, Update Files, etc.)
+ *  - `.mod-file-item-name`      → expected file name
+ *  - `.mod-file-item-version`   → expected version
+ */
 function extractFileEntries(
   $: CheerioAPI,
-  $section: Cheerio<any>,
+  $mod: Cheerio<any>,
+  nexusIds: { modId: number; fileId?: number } | undefined,
   diagnostics: ParserDiagnostic[],
   pageSlug: string,
+  modTitle: string,
 ): GuideFileEntry[] {
   const entries: GuideFileEntry[] = [];
 
-  // Look for common patterns:
-  // "Main Files — <filename> <version>"
-  // "Update Files — <filename> <version>"
-  // etc.
-  const categoryPatterns: Array<{ pattern: RegExp; category: FileCategory }> = [
-    { pattern: /main\s+files?/i, category: "MAIN" },
-    { pattern: /update\s+files?/i, category: "UPDATE" },
-    { pattern: /optional\s+files?/i, category: "OPTIONAL" },
-    { pattern: /miscellaneous\s+files?/i, category: "MISC" },
-    { pattern: /old\s+files?/i, category: "OLD" },
-  ];
+  $mod.find("span.mod-file-item").each((_i, el) => {
+    const $item = $(el);
 
-  // Scan text nodes and list items for file references
-  $section.find("li, p, td").each((_i, el) => {
-    const text = $(el).text().trim();
-    if (!text) return;
+    // Category text, e.g. "Main Files", "Update Files", "Optional Files"
+    const categoryText = $item.find(".mod-file-item-category").text().trim();
+    const fileCategory = mapFileCategory(categoryText);
 
-    let category: FileCategory = "UNKNOWN";
-    for (const cp of categoryPatterns) {
-      if (cp.pattern.test(text)) {
-        category = cp.category;
-        break;
-      }
+    // File name
+    const fileName = $item.find(".mod-file-item-name").text().trim();
+
+    // Version (strip the "Version:" label)
+    const versionEl = $item.find(".mod-file-item-version");
+    let version: string | undefined;
+    if (versionEl.length > 0) {
+      // Remove the label span text
+      const labelText = versionEl.find(".mod-file-item-version-label").text();
+      version = versionEl.text().replace(labelText, "").trim() || undefined;
     }
 
-    // Look for nexus link within this element
-    const $link = $(el).find('a[href*="nexusmods.com"]');
-    const sourceUrl = $link.length > 0 ? $link.attr("href") : undefined;
-
-    // Try to extract nexus mod ID from URL
-    const nexusIds = sourceUrl ? parseNexusUrl(sourceUrl) : undefined;
-
-    // Try to extract version text (common patterns: "v1.2.3", "1.2.3", "Version 1.2.3")
-    const versionMatch = text.match(/(?:v(?:ersion)?\s*)?(\d+\.\d+(?:\.\d+)*(?:\s*[a-zA-Z]*)?)/i);
-    const expectedVersion = versionMatch ? versionMatch[1]!.trim() : undefined;
-
-    // Skip if we couldn't extract anything meaningful
-    if (!sourceUrl && category === "UNKNOWN") return;
+    // Nexus source URL from the parent mod's download link
+    const sourceUrl = $mod.find('div.mod-subheading a[href*="nexusmods.com"]').first().attr("href") ?? undefined;
 
     entries.push({
-      fileCategory: category,
-      labelText: text.substring(0, 200), // cap label length
-      expectedFileName: $link.length > 0 ? $link.text().trim() : undefined,
-      expectedVersion,
+      fileCategory,
+      labelText: `${categoryText} — ${fileName}`.substring(0, 500),
+      expectedFileName: fileName || undefined,
+      expectedVersion: version,
       sourceUrl,
       nexusModId: nexusIds?.modId,
       nexusFileId: nexusIds?.fileId,
@@ -193,28 +263,84 @@ function extractFileEntries(
   return entries;
 }
 
-function extractBasicFileEntries(
-  $: CheerioAPI,
-  $links: Cheerio<any>,
-): GuideFileEntry[] {
-  const entries: GuideFileEntry[] = [];
+/**
+ * Map the guide's category labels to our FileCategory enum.
+ */
+function mapFileCategory(text: string): FileCategory {
+  const lower = text.toLowerCase();
+  if (lower.includes("main")) return "MAIN";
+  if (lower.includes("update")) return "UPDATE";
+  if (lower.includes("optional")) return "OPTIONAL";
+  if (lower.includes("miscellaneous") || lower.includes("misc")) return "MISC";
+  if (lower.includes("old")) return "OLD";
+  return "UNKNOWN";
+}
 
-  $links.each((_i, el) => {
-    const href = $(el).attr("href") ?? "";
-    const text = $(el).text().trim();
-    const nexusIds = parseNexusUrl(href);
+/**
+ * Extract FOMOD instructions from the fomod-toggle carousel.
+ *
+ * Structure:
+ *   div.fomod-toggle
+ *     div.fomod-carousel
+ *       div.fomod-page-wrapper
+ *         div.fomod-page-label  → page name
+ *         div.fomod-page-content
+ *           fieldset.fomod-section
+ *             legend.fomod-section-label → section name
+ *             div.fomod-item → selection (checked = selected)
+ */
+function extractFomodInstructions($: CheerioAPI, $mod: Cheerio<any>): FomodInstruction[] {
+  const instructions: FomodInstruction[] = [];
 
-    entries.push({
-      fileCategory: "MAIN",
-      labelText: text || href,
-      expectedFileName: text || undefined,
-      sourceUrl: href,
-      nexusModId: nexusIds?.modId,
-      nexusFileId: nexusIds?.fileId,
+  $mod.find("div.fomod-toggle div.fomod-page-wrapper").each((_i, el) => {
+    const $page = $(el);
+    const pageLabel = $page.find(".fomod-page-label").text().trim();
+
+    const selections: string[] = [];
+
+    $page.find("fieldset.fomod-section").each((_j, sectionEl) => {
+      const $section = $(sectionEl);
+      const sectionLabel = $section.find("legend.fomod-section-label").text().trim();
+
+      $section.find("div.fomod-item").each((_k, itemEl) => {
+        const $item = $(itemEl);
+        // Check if this option is selected (has checked attribute)
+        const isChecked = $item.find("input[checked]").length > 0;
+        if (isChecked) {
+          // Get the text content (excluding the input element)
+          const itemText = $item.text().trim();
+          selections.push(`[${sectionLabel}] ${itemText}`);
+        }
+      });
     });
+
+    if (selections.length > 0) {
+      instructions.push({
+        stepLabel: pageLabel,
+        selections,
+      });
+    }
   });
 
-  return entries;
+  return instructions;
+}
+
+/**
+ * Extract special instructions from `.mod-special-instructions`.
+ */
+function extractSpecialInstructions($: CheerioAPI, $mod: Cheerio<any>): string[] {
+  const instructions: string[] = [];
+
+  $mod.find("div.mod-special-instructions span.mod-instructions").each((_i, el) => {
+    const html = $(el).html() ?? "";
+    // Convert inner HTML to readable text, preserving list structure
+    const text = $(el).text().trim();
+    if (text.length > 5) {
+      instructions.push(text);
+    }
+  });
+
+  return [...new Set(instructions)];
 }
 
 function parseNexusUrl(url: string): { modId: number; fileId?: number } | undefined {
@@ -240,66 +366,9 @@ function determineInstallMode(entries: GuideFileEntry[]): InstallModeHint {
     (e) => e.fileCategory === "OPTIONAL" || e.fileCategory === "MISC" || e.fileCategory === "OLD",
   );
 
+  if (hasMain && hasUpdate) return "MERGE";
   if (hasMain) return "NEW";
   if (hasUpdate) return "MERGE";
   if (hasOptional) return "SEPARATE";
   return "NEW"; // default
-}
-
-function extractFomodInstructions(
-  $: CheerioAPI,
-  $section: Cheerio<any>,
-): FomodInstruction[] {
-  const fomod: FomodInstruction[] = [];
-
-  // Look for FOMOD-related text blocks (often in bullet lists or tables)
-  const fomodHeader = $section.find(":contains('FOMOD')").first();
-  if (fomodHeader.length === 0) return fomod;
-
-  // Try to parse selections from subsequent list items
-  const $list = fomodHeader.nextAll("ul, ol").first();
-  if ($list.length > 0) {
-    const selections: string[] = [];
-    $list.find("li").each((_i, el) => {
-      selections.push($(el).text().trim());
-    });
-    if (selections.length > 0) {
-      fomod.push({ selections });
-    }
-  }
-
-  return fomod;
-}
-
-function extractSpecialInstructions(
-  $: CheerioAPI,
-  $section: Cheerio<any>,
-): string[] {
-  const instructions: string[] = [];
-
-  // Look for special instruction blocks (often in alert/note boxes or bold text)
-  $section.find(":contains('Special Instructions'), :contains('Note:'), :contains('Important:')").each(
-    (_i, el) => {
-      const text = $(el).text().trim();
-      if (text.length > 10 && text.length < 2000) {
-        instructions.push(text);
-      }
-    },
-  );
-
-  // Deduplicate
-  return [...new Set(instructions)];
-}
-
-function extractTags($: CheerioAPI, $section: Cheerio<any>): string[] {
-  const tags: string[] = [];
-
-  // Look for ESL, ESPFE, ESM markers
-  const text = $section.text();
-  if (/\bESL\b/.test(text)) tags.push("ESL");
-  if (/\bESPFE\b/.test(text)) tags.push("ESPFE");
-  if (/\bESM\b/.test(text)) tags.push("ESM");
-  if (/\bESP\b/.test(text)) tags.push("ESP");
-
-  return tags;
 }
