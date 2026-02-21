@@ -6,10 +6,11 @@ A CLI companion tool for following [Lexy's Legacy of the Dragonborn](https://lex
 
 1. **Parses** the Lexy guide HTML into a structured manifest of 1,300+ mod tasks
 2. **Validates** each mod's files against the Nexus Mods API (correct version, file availability)
-3. **Queues** tasks in install order with file categories, FOMOD instructions, and special steps
-4. **Tracks** your progress with a local SQLite session (mark-done, mark-blocked)
-5. **Observes** your MO2 instance to detect which mods are already installed
-6. **Reports** on validation confidence, mismatches, and archived files
+4. **Downloads** files directly from Nexus Premium API to MO2, organized by guide section
+5. **Queues** tasks in install order with file categories, FOMOD instructions, and special steps
+6. **Tracks** your progress with a local SQLite session (mark-done, mark-blocked)
+7. **Reports** on validation confidence, mismatches, and archived files
+8. **Observes** your MO2 instance to detect which mods are already installed
 
 ## Prerequisites
 
@@ -55,6 +56,7 @@ lotd_validator/
 │   ├── logger/                     # Pino structured logging
 │   ├── guide-parser/               # HTML fetcher + cheerio parser
 │   ├── nexus-resolver/             # Nexus API client + file matcher
+│   ├── mod-downloader/             # Premium API section-based downloader
 │   ├── install-queue-engine/       # Manifest → ordered task queue
 │   ├── session-store/              # SQLite session persistence
 │   └── mo2-observer/               # Read-only MO2 state inspector
@@ -72,6 +74,7 @@ lotd_validator/
 | `sync-guide` | Download/update cached guide HTML |
 | `build-manifest` | Parse HTML → `manifest.json` |
 | `validate` | Check files against Nexus API |
+| `download` | Auto-download files (Premium only) |
 | `queue` | Show full install queue |
 | `next` | Show the next task to work on |
 | `show <id>` | Show details for a specific task |
