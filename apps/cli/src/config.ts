@@ -43,13 +43,17 @@ export async function loadConfig(): Promise<LexyConfig> {
 /**
  * Create a default config file.
  */
-export async function initConfig(nexusApiKey: string, dataDir?: string): Promise<string> {
+export async function initConfig(
+  nexusApiKey: string,
+  opts?: { dataDir?: string; mo2Path?: string },
+): Promise<string> {
   await mkdir(CONFIG_DIR, { recursive: true });
 
   const config: LexyConfig = {
     nexusApiKey,
     guideBaseUrl: "https://lexyslotd.com/guide/",
-    dataDir: dataDir ?? join(CONFIG_DIR, "data"),
+    dataDir: opts?.dataDir ?? join(CONFIG_DIR, "data"),
+    mo2: opts?.mo2Path ? { portableRoot: opts.mo2Path } : undefined,
   };
 
   await writeFile(CONFIG_PATH, JSON.stringify(config, null, 2), "utf-8");

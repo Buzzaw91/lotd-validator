@@ -6,6 +6,7 @@ import { syncGuide, buildManifest, formatDiagnostics } from "@lexy/guide-parser"
 import { resolveManifest } from "@lexy/nexus-resolver";
 import { buildQueue, renderTask } from "@lexy/install-queue-engine";
 import { SessionStore } from "@lexy/session-store";
+import { createSnapshot, formatSnapshot, listProfiles } from "@lexy/mo2-observer";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
@@ -24,8 +25,12 @@ program
   .description("Create a default config file")
   .requiredOption("--api-key <key>", "Nexus Mods API key")
   .option("--data-dir <path>", "Data directory")
+  .option("--mo2-path <path>", "Path to MO2 portable instance")
   .action(async (opts) => {
-    const path = await initConfig(opts.apiKey, opts.dataDir);
+    const path = await initConfig(opts.apiKey, {
+      dataDir: opts.dataDir,
+      mo2Path: opts.mo2Path,
+    });
     console.log(`✅ Config created at ${path}`);
   });
 
@@ -292,6 +297,62 @@ program
     }
 
     console.log("\n" + renderTask(task));
+  });
+
+// ── observe ─────────────────────────────────────────────────────────
+
+program
+  .command("observe")
+  .description("Read MO2 state and compare against the guide manifest")
+  .option("--mo2-path <path>", "Path to MO2 portable instance")
+  .option("--profile <name>", "MO2 profile name", "Default")
+  .option("--json", "Output raw JSON instead of formatted text")
+  .action(async (opts) => {
+    const config = await loadConfig();
+
+    const mo2Path = opts.mo2Path ?? config.mo2?.portableRoot;
+    if (!mo2Path) {
+      console.error(
+        "❌ MO2 path not configured. Use --mo2-path or set mo2.portableRoot in config.json",
+      );
+      process.exit(1);
+    }
+
+    // Check that profile exists
+    const profiles = await listProfiles(mo2Path);
+    if (profiles.length === 0) {
+      console.error(`❌ No profiles found in ${mo2Path}/profiles/`);
+      process.exit(1);
+    }
+    if (!profiles.includes(opts.profile)) {
+      console.error(`❌ Profile "${opts.profile}" not found. Available: ${profiles.join(", ")}`);
+      process.exit(1);
+    }
+
+    // Load manifest
+    const manifestPath = join(config.dataDir, "manifests", "manifest.json");
+    let manifest;
+    try {
+      manifest = JSON.parse(await readFile(manifestPath, "utf-8"));
+    } catch {
+      console.error("❌ Manifest not found. Run `lexy build-manifest` first.");
+      process.exit(1);
+    }
+
+    console.log("Scanning MO2 instance...");
+    const snapshot = await createSnapshot(mo2Path, opts.profile, manifest);
+
+    if (opts.json) {
+      console.log(JSON.stringify(snapshot, null, 2));
+    } else {
+      console.log(formatSnapshot(snapshot));
+    }
+
+    // Optionally save snapshot
+    const snapshotPath = join(config.dataDir, "mo2-snapshot.json");
+    const { writeFile: wf } = await import("node:fs/promises");
+    await wf(snapshotPath, JSON.stringify(snapshot, null, 2), "utf-8");
+    console.log(`\n💾 Snapshot saved to ${snapshotPath}`);
   });
 
 program.parse();
