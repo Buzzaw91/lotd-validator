@@ -15,7 +15,8 @@ packages/
 ├── guide-parser    # HTML sync + cheerio parser + manifest builder
 ├── nexus-resolver  # Nexus API client + file matcher + resolver
 ├── install-queue-engine  # Manifest → QueueTask[]
-└── session-store   # SQLite persistence
+├── session-store   # SQLite persistence
+└── mo2-observer    # Read-only MO2 state inspector + matcher
 
 apps/
 └── cli             # Commander-based CLI entry point
@@ -28,7 +29,8 @@ cli
  ├── guide-parser → core-types, logger
  ├── nexus-resolver → core-types, logger
  ├── install-queue-engine → core-types
- └── session-store → core-types
+ ├── session-store → core-types
+ └── mo2-observer → core-types, logger
 ```
 
 All inter-package imports use workspace protocol (`workspace:*`) in `package.json`.
@@ -97,6 +99,14 @@ SQLite-backed persistence using `better-sqlite3`:
 - Event/audit log for all transitions
 - Session management (create, resume, export report)
 
+### `@lexy/mo2-observer`
+
+Read-only MO2 state inspector. Three modules:
+
+- **`mo2-reader.ts`** — Parses MO2 data files: `modlist.txt` (enabled/disabled/separator entries), `meta.ini` per-mod (Nexus IDs, version, install file), mod folder listing, and profile detection.
+- **`matcher.ts`** — Cross-references installed mods against the guide manifest using a 3-tier strategy: Nexus mod ID match, exact normalized name, and fuzzy word-overlap matching. Produces an `ObserverSnapshot`.
+- **`index.ts`** — `createSnapshot()` orchestrator and `formatSnapshot()` CLI renderer.
+
 ---
 
 ## Extending the Parser
@@ -114,22 +124,22 @@ If the guide HTML structure changes, update `packages/guide-parser/src/parser.ts
 ## Data Flow
 
 ```
-Lexy Guide (HTML)
+Lexy Guide (HTML)                MO2 Instance
+       │                              │
+       ▼                              ▼
+  sync-guide     → cache/*.html  observe → mo2-snapshot.json
+       │                              │
+       ▼                              │
+  build-manifest → manifest.json ←────┘ (cross-reference)
        │
        ▼
-  sync-guide     → guide-cache/*.html
-       │
-       ▼
-  build-manifest → manifests/manifest.json (GuideManifest)
-       │
-       ▼
-  validate       → validation-report.json (ValidationRecord[])
+  validate       → validation-report.json
        │
        ▼
   queue / next   → QueueTask[] (rendered to CLI)
        │
        ▼
-  mark-done/blocked → sessions/session.db (SQLite)
+  mark-done/blocked → sessions/session.db
        │
        ▼
   export-report  → audit-report.json

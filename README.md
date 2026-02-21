@@ -8,7 +8,8 @@ A CLI companion tool for following [Lexy's Legacy of the Dragonborn](https://lex
 2. **Validates** each mod's files against the Nexus Mods API (correct version, file availability)
 3. **Queues** tasks in install order with file categories, FOMOD instructions, and special steps
 4. **Tracks** your progress with a local SQLite session (mark-done, mark-blocked)
-5. **Reports** on validation confidence, mismatches, and archived files
+5. **Observes** your MO2 instance to detect which mods are already installed
+6. **Reports** on validation confidence, mismatches, and archived files
 
 ## Prerequisites
 
@@ -55,7 +56,8 @@ lotd_validator/
 │   ├── guide-parser/               # HTML fetcher + cheerio parser
 │   ├── nexus-resolver/             # Nexus API client + file matcher
 │   ├── install-queue-engine/       # Manifest → ordered task queue
-│   └── session-store/              # SQLite session persistence
+│   ├── session-store/              # SQLite session persistence
+│   └── mo2-observer/               # Read-only MO2 state inspector
 ├── docs/                           # Documentation
 ├── architecture.md                 # Full architecture spec
 └── pnpm-workspace.yaml             # Monorepo config
@@ -75,6 +77,7 @@ lotd_validator/
 | `show <id>` | Show details for a specific task |
 | `mark-done <id>` | Mark a task as completed |
 | `mark-blocked <id>` | Mark a task as blocked |
+| `observe` | Compare MO2 installed mods against manifest |
 | `export-report` | Export session audit report |
 
 ## Configuration
@@ -85,7 +88,10 @@ Config is stored at `~/.lexy-assistant/config.json`:
 {
   "nexusApiKey": "YOUR_API_KEY",
   "guideBaseUrl": "https://lexyslotd.com/guide",
-  "dataDir": "~/.lexy-assistant/data"
+  "dataDir": "~/.lexy-assistant/data",
+  "mo2": {
+    "portableRoot": "C:\\Programs\\MO2"
+  }
 }
 ```
 
@@ -100,6 +106,7 @@ All data is local to your machine:
 | `data/nexus-cache/` | Cached Nexus API responses |
 | `data/sessions/` | SQLite session database |
 | `data/validation-report.json` | Latest validation results |
+| `data/mo2-snapshot.json` | Latest MO2 observer snapshot |
 
 ## Tech Stack
 

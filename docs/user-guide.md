@@ -14,6 +14,7 @@ This guide walks you through the complete workflow for using the Lexy LOTD Valid
    - [Step 3: Validate Against Nexus](#step-3-validate-against-nexus)
    - [Step 4: Work the Queue](#step-4-work-the-queue)
    - [Step 5: Track Progress](#step-5-track-progress)
+   - [Step 6: Observe MO2](#step-6-observe-mo2)
 4. [Command Reference](#command-reference)
 5. [Troubleshooting](#troubleshooting)
 
@@ -54,7 +55,10 @@ This creates `~/.lexy-assistant/config.json`:
 {
   "nexusApiKey": "YOUR_API_KEY",
   "guideBaseUrl": "https://lexyslotd.com/guide",
-  "dataDir": "C:\\Users\\<you>\\.lexy-assistant\\data"
+  "dataDir": "C:\\Users\\<you>\\.lexy-assistant\\data",
+  "mo2": {
+    "portableRoot": "C:\\Programs\\MO2"
+  }
 }
 ```
 
@@ -70,6 +74,16 @@ lexy doctor
 ```bash
 lexy config-init --api-key "..." --data-dir "D:\\Skyrim\\lexy-data"
 ```
+
+### MO2 path
+
+Point the tool at your MO2 portable instance during init:
+
+```bash
+lexy config-init --api-key "..." --mo2-path "C:\\Programs\\MO2"
+```
+
+Or add it manually to `config.json` under `"mo2": { "portableRoot": "..." }`.
 
 ---
 
@@ -206,6 +220,53 @@ lexy export-report
 #   todo: 1262
 ```
 
+### Step 6: Observe MO2
+
+If you have a Mod Organizer 2 portable instance, the tool can read it to automatically detect which guide mods are already installed:
+
+```bash
+lexy observe --mo2-path "C:\Programs\MO2"
+# Scanning MO2 instance...
+#
+# 🔍 MO2 Observer Snapshot
+#    Profile: Default
+#    Path: C:\Programs\MO2
+#
+# 📊 Summary
+#    Installed mods: 247
+#    Matched tasks: 203
+#    Unmatched MO2 mods: 12
+#    Missing from MO2: 1105
+#
+# 🔗 Match Methods
+#    Nexus ID: 185
+#    Exact name: 11
+#    Fuzzy name: 7
+```
+
+If you configured `mo2.portableRoot` in your config, you can omit the flag:
+
+```bash
+lexy observe
+```
+
+To use a different MO2 profile:
+
+```bash
+lexy observe --profile "My Custom Profile"
+```
+
+For machine-readable output:
+
+```bash
+lexy observe --json > snapshot.json
+```
+
+The observer is **completely read-only** — it never writes to MO2. It matches by:
+1. **Nexus mod ID** (from `meta.ini`) — most reliable
+2. **Exact mod name** (normalized, case-insensitive)
+3. **Fuzzy matching** (word overlap for renamed mods)
+
 ---
 
 ## Command Reference
@@ -215,13 +276,14 @@ lexy export-report
 Create or overwrite the configuration file.
 
 ```
-lexy config-init --api-key <key> [--data-dir <path>]
+lexy config-init --api-key <key> [--data-dir <path>] [--mo2-path <path>]
 ```
 
 | Option | Required | Description |
 |--------|----------|-------------|
 | `--api-key` | Yes | Your Nexus Mods API key |
 | `--data-dir` | No | Custom data directory (default: `~/.lexy-assistant/data`) |
+| `--mo2-path` | No | Path to MO2 portable instance |
 
 ### `doctor`
 
@@ -302,6 +364,20 @@ Export an audit report of your session progress.
 ```
 lexy export-report [--session <id>]
 ```
+
+### `observe`
+
+Scan MO2 installed mods and compare against the guide manifest.
+
+```
+lexy observe [--mo2-path <path>] [--profile <name>] [--json]
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--mo2-path` | Config value | Path to MO2 portable instance |
+| `--profile` | `Default` | MO2 profile to inspect |
+| `--json` | — | Output raw JSON snapshot |
 
 ---
 
