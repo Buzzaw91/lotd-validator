@@ -1,0 +1,24 @@
+{
+  "name": "@lexy/nexus-resolver",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@lexy/core-types": "workspace:*",
+    "@lexy/logger": "workspace:*",
+    "bottleneck": "^2.19.5",
+    "p-retry": "^6.2.1",
+    "undici": "^7.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "lexy-assistant",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r run build",
+    "test": "pnpm -r run test",
+    "lint": "eslint . --ext .ts",
+    "clean": "pnpm -r run clean"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5",
+    "eslint": "^9.20.0",
+    "@typescript-eslint/parser": "^8.24.0",
+    "@typescript-eslint/eslint-plugin": "^8.24.0",
+    "prettier": "^3.5.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
