@@ -128,6 +128,7 @@ Then `lexy observe` against your MO2 to see what changed — new mods to install
 | Scenario | Manual | Tool-Assisted |
 |----------|--------|---------------|
 | **Find the next mod to install** | Scroll through HTML, remember where you left off | `lexy next` — instant |
+| **Download files** | Open Nexus tab, find correct file version, click download | `lexy download --next` (Premium API) |
 | **Get FOMOD options** | Find the section in the guide, match to FOMOD wizard | Shown inline with the task |
 | **Check if a file is available** | Visit Nexus page, browse files tab | Pre-validated with `lexy validate` |
 | **Track progress** | Notepad, spreadsheet, or memory | `lexy mark-done` + SQLite persistence |
@@ -148,6 +149,7 @@ Then `lexy observe` against your MO2 to see what changed — new mods to install
 - You prefer reading the guide prose for learning
 
 ### Tool-assisted shines when:
+- You have a Nexus Premium account and want fully automated downloading
 - You're doing a full 1,300+ mod LOTD install from scratch
 - You need to pick up where you left off after days or weeks
 - You want to pre-validate that all files are still available before starting
@@ -162,5 +164,5 @@ The LOTD Validator doesn't replace the guide — it **structures it**. The guide
 
 ```
 Manual:     Read page → Find mod → Download → Install → Remember
-Assisted:   next → show → download → install → mark-done → next
+Assisted:   download → install → mark-done → next
 ```

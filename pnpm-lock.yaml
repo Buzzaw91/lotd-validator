@@ -44,6 +44,9 @@ importers:
       '@lexy/mo2-observer':
         specifier: workspace:*
         version: link:../../packages/mo2-observer
+      '@lexy/mod-downloader':
+        specifier: workspace:*
+        version: link:../../packages/mod-downloader
       '@lexy/nexus-resolver':
         specifier: workspace:*
         version: link:../../packages/nexus-resolver
@@ -148,6 +151,25 @@ importers:
       '@lexy/logger':
         specifier: workspace:*
         version: link:../logger
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.11
+
+  packages/mod-downloader:
+    dependencies:
+      '@lexy/core-types':
+        specifier: workspace:*
+        version: link:../core-types
+      '@lexy/logger':
+        specifier: workspace:*
+        version: link:../logger
+      '@lexy/nexus-resolver':
+        specifier: workspace:*
+        version: link:../nexus-resolver
+      undici:
+        specifier: ^7.5.0
+        version: 7.22.0
     devDependencies:
       '@types/node':
         specifier: ^22.0.0

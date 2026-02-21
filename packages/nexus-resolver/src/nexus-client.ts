@@ -47,6 +47,12 @@ export interface NexusFilesResponse {
   file_updates: unknown[];
 }
 
+export interface NexusDownloadLink {
+  name: string;
+  short_name: string;
+  URI: string;
+}
+
 export class NexusClient {
   private apiKey: string;
 
@@ -65,6 +71,16 @@ export class NexusClient {
   async getModFiles(modId: number): Promise<NexusFilesResponse> {
     return this.apiRequest<NexusFilesResponse>(
       `${NEXUS_API_BASE}/games/${GAME_DOMAIN}/mods/${modId}/files.json`,
+    );
+  }
+
+  /**
+   * Get download links for a specific file (premium only).
+   * Returns an array of CDN mirror URLs.
+   */
+  async getDownloadLinks(modId: number, fileId: number): Promise<NexusDownloadLink[]> {
+    return this.apiRequest<NexusDownloadLink[]>(
+      `${NEXUS_API_BASE}/games/${GAME_DOMAIN}/mods/${modId}/files/${fileId}/download_link.json`,
     );
   }
 

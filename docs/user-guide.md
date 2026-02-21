@@ -12,9 +12,10 @@ This guide walks you through the complete workflow for using the Lexy LOTD Valid
    - [Step 1: Sync the Guide](#step-1-sync-the-guide)
    - [Step 2: Build the Manifest](#step-2-build-the-manifest)
    - [Step 3: Validate Against Nexus](#step-3-validate-against-nexus)
-   - [Step 4: Work the Queue](#step-4-work-the-queue)
-   - [Step 5: Track Progress](#step-5-track-progress)
-   - [Step 6: Observe MO2](#step-6-observe-mo2)
+   - [Step 4: Download Mods (Premium)](#step-4-download-mods-premium)
+   - [Step 5: Work the Queue](#step-5-work-the-queue)
+   - [Step 6: Track Progress](#step-6-track-progress)
+   - [Step 7: Observe MO2](#step-7-observe-mo2)
 4. [Command Reference](#command-reference)
 5. [Troubleshooting](#troubleshooting)
 
@@ -92,7 +93,7 @@ Or add it manually to `config.json` under `"mo2": { "portableRoot": "..." }`.
 The tool follows a **pipeline** — each step feeds into the next:
 
 ```
-sync-guide → build-manifest → validate → queue/next → mark-done
+sync-guide → build-manifest → validate → download → queue/next → mark-done
 ```
 
 ### Step 1: Sync the Guide
@@ -155,7 +156,31 @@ lexy validate
 
 > **Note:** Validation hits the Nexus API and is rate-limited to respect their hourly quota. The first run may take a while; subsequent runs use cached API responses.
 
-### Step 4: Work the Queue
+### Step 4: Download Mods (Premium)
+
+If you have a **Nexus Premium account**, you can automatically download all files for a specific section directly to your MO2 downloads folder. 
+
+```bash
+# Preview what would be downloaded for your next pending task
+lexy download --next --dry-run
+# 🔍 Dry Run: Optimized Texture Baseline
+# Will download 1 files to C:\Programs\MO2\downloads...
+
+# Actually download them
+lexy download --next
+```
+
+The tool uses the Premium API to resolve CDN download links and streams them to MO2, creating `.meta` sidecars so MO2 recognizes the files properly.
+
+You can also download by specific section or page:
+```bash
+lexy download --section "Extension Frameworks - Engine Patches"
+lexy download --page mod-installation-part-1
+```
+
+> **Note:** Free users must bypass this step and manually download files via the Nexus browser pages.
+
+### Step 5: Work the Queue
 
 View the full install queue, ordered exactly as the guide presents it:
 
@@ -187,7 +212,7 @@ To see **details** for a specific task by ID:
 lexy show mod-installation-part-1-5
 ```
 
-### Step 5: Track Progress
+### Step 6: Track Progress
 
 As you install each mod, mark it as done:
 
@@ -220,7 +245,7 @@ lexy export-report
 #   todo: 1262
 ```
 
-### Step 6: Observe MO2
+### Step 7: Observe MO2
 
 If you have a Mod Organizer 2 portable instance, the tool can read it to automatically detect which guide mods are already installed:
 
@@ -356,6 +381,23 @@ Mark a task as blocked.
 ```
 lexy mark-blocked <taskId> [--session <id>] [--note <text>]
 ```
+
+### `download`
+
+Download checked files for a given section or page (requires Premium Nexus API).
+
+```
+lexy download [--next] [--section <name>] [--page <slug>] [--list] [--skip-existing] [--dry-run]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--next` | Automatically find and download the section for the next pending task |
+| `--section` | Download files for a specific section title |
+| `--page` | Download all files for an entire page |
+| `--list` | List all available sections in the guide |
+| `--skip-existing` | Skip files already present in the MO2 downloads directory |
+| `--dry-run` | Print what would be downloaded without actually downloading |
 
 ### `export-report`
 

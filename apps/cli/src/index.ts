@@ -3,10 +3,11 @@
 import { Command } from "commander";
 import { loadConfig, initConfig, doctorConfig, CONFIG_PATH } from "./config.js";
 import { syncGuide, buildManifest, formatDiagnostics } from "@lexy/guide-parser";
-import { resolveManifest } from "@lexy/nexus-resolver";
+import { resolveManifest, NexusClient } from "@lexy/nexus-resolver";
 import { buildQueue, renderTask } from "@lexy/install-queue-engine";
 import { SessionStore } from "@lexy/session-store";
 import { createSnapshot, formatSnapshot, listProfiles } from "@lexy/mo2-observer";
+import { listSections, buildDownloadPlan, buildPageDownloadPlan, executeDownloads, formatDownloadResult } from "@lexy/mod-downloader";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
@@ -353,6 +354,127 @@ program
     const { writeFile: wf } = await import("node:fs/promises");
     await wf(snapshotPath, JSON.stringify(snapshot, null, 2), "utf-8");
     console.log(`\n💾 Snapshot saved to ${snapshotPath}`);
+  });
+
+// ── download ────────────────────────────────────────────────────────
+
+program
+  .command("download")
+  .description("Download mod files from Nexus via premium API")
+  .option("--next", "Download the section containing the next pending task")
+  .option("--section <name>", "Download files for a specific section")
+  .option("--page <slug>", "Download all sections in a page")
+  .option("--list", "List available sections")
+  .option("--skip-existing", "Skip files already in MO2 downloads dir")
+  .option("--dry-run", "Show what would be downloaded without downloading")
+  .option("--mo2-path <path>", "Path to MO2 portable instance")
+  .option("--session <id>", "Session ID (for --next)")
+  .action(async (opts) => {
+    const config = await loadConfig();
+
+    const manifestPath = join(config.dataDir, "manifests", "manifest.json");
+    const reportPath = join(config.dataDir, "validation-report.json");
+
+    let manifest, validations;
+    try {
+      manifest = JSON.parse(await readFile(manifestPath, "utf-8"));
+    } catch {
+      console.error("❌ Manifest not found. Run `lexy build-manifest` first.");
+      process.exit(1);
+    }
+
+    if (opts.list) {
+      const sections = listSections(manifest);
+      console.log(`\n📋 Available Sections (${sections.length} total)\n`);
+      for (const s of sections) {
+        console.log(`  ${s.pageSlug} > ${s.sectionTitle} (${s.fileCount} files in ${s.taskCount} tasks)`);
+      }
+      return;
+    }
+
+    try {
+      validations = JSON.parse(await readFile(reportPath, "utf-8"));
+    } catch {
+      console.error("❌ Validation report not found. Run `lexy validate` first.");
+      process.exit(1);
+    }
+
+    let plan;
+
+    if (opts.next) {
+      const sessionId = opts.session ?? "default";
+      const dbPath = join(config.dataDir, "sessions", "session.db");
+      await mkdir(join(config.dataDir, "sessions"), { recursive: true });
+      const store = new SessionStore(dbPath);
+
+      if (!store.getSession(sessionId)) {
+        store.createSession(sessionId, "Default Session");
+      }
+
+      const next = store.getNextTask(sessionId);
+      store.close();
+
+      if (!next) {
+        console.log("🎉 All tasks complete! Nothing left to download.");
+        return;
+      }
+
+      const task = manifest.tasks.find((t: any) => t.id === next.id);
+      if (!task) {
+        console.error(`❌ Could not find task ${next.id} in manifest.`);
+        process.exit(1);
+      }
+
+      console.log(`\n📌 Next pending task is in: ${task.pageSlug} > ${task.sectionTitle}`);
+      plan = buildDownloadPlan(manifest, validations, task.sectionTitle, task.pageSlug);
+    } else if (opts.section) {
+      plan = buildDownloadPlan(manifest, validations, opts.section);
+    } else if (opts.page) {
+      plan = buildPageDownloadPlan(manifest, validations, opts.page);
+    } else {
+      console.error("❌ Must specify --next, --section, --page, or --list");
+      process.exit(1);
+    }
+
+    if (plan.targets.length === 0) {
+      console.log("No downloadable files found for this selection.");
+      return;
+    }
+
+    const mo2Path = opts.mo2Path ?? config.mo2?.portableRoot;
+    if (!mo2Path) {
+      console.error("❌ MO2 path not configured. Required to locate downloads folder.");
+      process.exit(1);
+    }
+
+    const downloadsDir = join(mo2Path, "downloads");
+
+    if (opts.dryRun) {
+      console.log(`\n🔍 Dry Run: ${plan.sectionTitle}`);
+      console.log(`Will download ${plan.targets.length} files to ${downloadsDir}\n`);
+      for (const t of plan.targets) {
+        console.log(`  • ${t.modTitle} — ${t.expectedFileName ?? t.matchedFileName ?? "Unknown"}`);
+      }
+      if (plan.skippedManual > 0) console.log(`\n  (Skipping ${plan.skippedManual} files with no Nexus ID)`);
+      if (plan.skippedNoFileId > 0) console.log(`  (Skipping ${plan.skippedNoFileId} files failing validation)`);
+      return;
+    }
+
+    const client = new NexusClient({ apiKey: config.nexusApiKey });
+    const { default: ora } = await import("ora");
+    const spinner = ora("Downloading files...").start();
+
+    const result = await executeDownloads(plan, {
+      downloadsDir,
+      client,
+      skipExisting: !!opts.skipExisting,
+      onProgress: (event) => {
+        spinner.text = `[${event.current}/${event.total}] ${event.target.modTitle} (${event.status})`;
+      },
+    });
+
+    spinner.stop();
+    console.log(formatDownloadResult(result, plan));
   });
 
 program.parse();

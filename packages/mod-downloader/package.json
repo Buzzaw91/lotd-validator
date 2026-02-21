@@ -1,0 +1,20 @@
+{
+  "name": "@lexy/mod-downloader",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@lexy/core-types": "workspace:*",
+    "@lexy/logger": "workspace:*",
+    "@lexy/nexus-resolver": "workspace:*",
+    "undici": "^7.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0"
+  }
+}

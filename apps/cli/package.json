@@ -17,6 +17,7 @@
     "@lexy/install-queue-engine": "workspace:*",
     "@lexy/logger": "workspace:*",
     "@lexy/mo2-observer": "workspace:*",
+    "@lexy/mod-downloader": "workspace:*",
     "@lexy/nexus-resolver": "workspace:*",
     "@lexy/session-store": "workspace:*",
     "chalk": "^5.4.1",
