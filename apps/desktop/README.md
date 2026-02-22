@@ -1,73 +1,78 @@
-# React + TypeScript + Vite
+# Lexy LOTD Desktop GUI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An Electron desktop application for managing your Lexy's LOTD Skyrim SE mod installation. Provides a visual interface for guide syncing, validation, downloading, and MO2 inspection.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Electron** — Desktop application shell
+- **React 19** — UI framework
+- **Vite** — Build tooling with HMR
+- **Tailwind CSS 3** — Utility-first styling
+- **xterm.js 6** — Integrated terminal for live CLI output
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+# From the workspace root
+pnpm install
+pnpm -r run build
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Launch the desktop app in dev mode
+cd apps/desktop
+pnpm dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The Electron window will open with a Vite dev server and hot-reload enabled.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Features
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Validator Tab
+- **Sync Guide** — Download the latest guide pages from lexyslotd.com
+- **Build Manifest** — Parse cached HTML into a structured manifest
+- **Validate Files** — Check mod files against the Nexus API with live progress
+
+### Downloader Tab
+- **Load Sections** — Fetches all guide sections into a scrollable radio selector
+- **Preview / Download** — Dry-run or download files for the selected section
+- **Next Pending** — Resume from where the session store left off
+
+### MO2 Observer Tab
+- **Run MO2 Inspection** — Reads your MO2 portable instance, compares installed mods against the guide manifest, and reports matched/unmatched/missing entries
+
+### Terminal
+- Live streaming output with ANSI color support
+- **Ctrl+C** copies selected text to clipboard
+- Right-click selects the word under cursor
+
+## Architecture
+
+```
+apps/desktop/
+├── electron/
+│   ├── main.ts          # Electron main process, IPC handlers
+│   └── preload.ts       # CJS contextBridge for renderer ↔ main IPC
+├── src/
+│   ├── App.tsx          # Main React component with tabs + terminal
+│   ├── main.tsx         # React entry point
+│   ├── index.css        # Tailwind directives + base styles
+│   └── types.d.ts       # Window.electronAPI type declarations
+├── vite.config.ts       # Vite + vite-plugin-electron config
+├── tailwind.config.js   # Tailwind content paths
+└── postcss.config.js    # PostCSS with Tailwind + Autoprefixer
+```
+
+## IPC Channels
+
+| Channel | Direction | Purpose |
+|---------|-----------|---------|
+| `run-command` | Renderer → Main | Execute CLI command, stream output |
+| `capture-command` | Renderer → Main | Execute CLI command, return stdout as string |
+| `command-stdout` | Main → Renderer | Stream stdout chunks |
+| `command-stderr` | Main → Renderer | Stream stderr chunks |
+
+## Building for Production
+
+```bash
+pnpm build          # Compiles TypeScript + bundles with Vite
+npx electron-builder  # Package as distributable (not yet configured)
 ```

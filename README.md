@@ -1,6 +1,6 @@
 # Lexy LOTD Validator
 
-A CLI companion tool for following [Lexy's Legacy of the Dragonborn](https://lexyslotd.com/) Skyrim SE modding guide. It parses the guide, validates mod files against the Nexus Mods API, and provides a step-by-step install queue to track your progress.
+A companion tool for following [Lexy's Legacy of the Dragonborn](https://lexyslotd.com/) Skyrim SE modding guide. It parses the guide, validates mod files against the Nexus Mods API, and provides a step-by-step install queue to track your progress. Available as both a CLI and an Electron desktop GUI.
 
 ## What It Does
 
@@ -11,6 +11,23 @@ A CLI companion tool for following [Lexy's Legacy of the Dragonborn](https://lex
 6. **Tracks** your progress with a local SQLite session (mark-done, mark-blocked)
 7. **Reports** on validation confidence, mismatches, and archived files
 8. **Observes** your MO2 instance to detect which mods are already installed
+
+## Desktop GUI
+
+A graphical interface built with Electron, React, and Tailwind CSS. It wraps the CLI and streams output into an integrated xterm.js terminal.
+
+```bash
+# Launch the desktop app
+cd apps/desktop
+pnpm dev
+```
+
+- **Validator tab** — Sync guide, build manifest, validate with live progress indicators
+- **Downloader tab** — Scrollable section selector with preview/download actions
+- **MO2 Observer tab** — One-click inspection of your MO2 instance
+- **Integrated terminal** — Live streaming output with ANSI colors, Ctrl+C copy support
+
+See [`apps/desktop/README.md`](apps/desktop/README.md) for full details.
 
 ## Prerequisites
 
@@ -50,7 +67,9 @@ See [`docs/user-guide.md`](docs/user-guide.md) for the full walkthrough.
 
 ```
 lotd_validator/
-├── apps/cli/                       # CLI entry point (lexy command)
+├── apps/
+│   ├── cli/                        # CLI entry point (lexy command)
+│   └── desktop/                    # Electron + React + Tailwind GUI
 ├── packages/
 │   ├── core-types/                 # Zod schemas for all domain types
 │   ├── logger/                     # Pino structured logging
@@ -113,7 +132,7 @@ All data is local to your machine:
 
 ## Tech Stack
 
-TypeScript • Zod • Cheerio • pnpm workspaces • Commander • Pino • SQLite (better-sqlite3) • Bottleneck • p-retry
+TypeScript • Electron • React • Vite • Tailwind CSS • xterm.js • Zod • Cheerio • pnpm workspaces • Commander • Pino • SQLite (better-sqlite3) • Bottleneck • p-retry
 
 ## License
 
