@@ -9,6 +9,7 @@ const log = createLogger("resolver");
 export interface ResolverOptions {
   apiKey: string;
   cacheDir: string;
+  onProgress?: (current: number, total: number, taskTitle: string, status: string) => void;
 }
 
 /**
@@ -22,6 +23,10 @@ export async function resolveManifest(
   const client = new NexusClient({ apiKey: options.apiKey });
   const cache = new MetadataCache(options.cacheDir);
   const records: ValidationRecord[] = [];
+
+  // Count total file entries for progress
+  const totalEntries = manifest.tasks.reduce((sum, t) => sum + t.fileEntries.length, 0);
+  let completed = 0;
 
   for (const task of manifest.tasks) {
     for (let i = 0; i < task.fileEntries.length; i++) {
@@ -72,6 +77,9 @@ export async function resolveManifest(
           },
           "resolved file entry",
         );
+
+        completed++;
+        options.onProgress?.(completed, totalEntries, task.modTitle, result.status);
       } catch (err) {
         log.error({ taskId: task.id, modId: entry.nexusModId, err }, "resolution failed");
         records.push({
@@ -82,6 +90,9 @@ export async function resolveManifest(
           nexusModId: entry.nexusModId,
           notes: [`Resolution failed: ${err instanceof Error ? err.message : String(err)}`],
         });
+
+        completed++;
+        options.onProgress?.(completed, totalEntries, task.modTitle, 'MANUAL');
       }
     }
   }

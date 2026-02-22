@@ -105,16 +105,21 @@ export function formatSnapshot(snapshot: ObserverSnapshot): string {
     lines.push(`   ⚠️  Version mismatches: ${versionMismatches}`);
   }
 
-  // Show unmatched mods (first 20)
-  if (snapshot.unmatchedMods.length > 0) {
+  // Show unmatched mods (first 20), excluding vanilla game content
+  const VANILLA_PREFIXES = ['DLC:', 'Creation Club:', 'cc'];
+  const filteredUnmatched = snapshot.unmatchedMods.filter(
+    (name) => !VANILLA_PREFIXES.some((p) => name.startsWith(p))
+  );
+  
+  if (filteredUnmatched.length > 0) {
     lines.push(``);
     lines.push(`❓ Unmatched MO2 Mods (not in guide):`);
-    const show = snapshot.unmatchedMods.slice(0, 20);
+    const show = filteredUnmatched.slice(0, 20);
     for (const name of show) {
       lines.push(`   • ${name}`);
     }
-    if (snapshot.unmatchedMods.length > 20) {
-      lines.push(`   ... and ${snapshot.unmatchedMods.length - 20} more`);
+    if (filteredUnmatched.length > 20) {
+      lines.push(`   ... and ${filteredUnmatched.length - 20} more`);
     }
   }
 
