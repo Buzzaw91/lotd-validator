@@ -87,9 +87,21 @@ program
     const { manifest, diagnostics } = await buildManifest({ cacheDir, outputPath });
 
     console.log(`✅ Manifest built: ${manifest.tasks.length} tasks across ${manifest.pages.length} pages`);
-    if (diagnostics.length > 0) {
+    
+    // Filter out expected "no downloadable files" for MCM, finishing-line, etc.
+    const filteredDiags = diagnostics.filter((d: any) => {
+      if (d.message?.includes('has no downloadable file entries')) {
+        const slug = d.pageSlug ?? d.source ?? '';
+        if (['mcm-setup', 'finishing-line', 'common-task-instructions'].includes(slug)) return false;
+      }
+      return true;
+    });
+    
+    if (filteredDiags.length > 0) {
       console.log("\nDiagnostics:");
-      console.log(formatDiagnostics(diagnostics));
+      console.log(formatDiagnostics(filteredDiags));
+    } else {
+      console.log("\n✅ No unexpected diagnostics.");
     }
   });
 
@@ -105,9 +117,20 @@ program
     const manifest = JSON.parse(raw);
 
     console.log("Validating against Nexus...");
+    
+    let lastPrinted = 0;
     const records = await resolveManifest(manifest, {
       apiKey: config.nexusApiKey,
       cacheDir: join(config.dataDir, "nexus-cache"),
+      onProgress: (current: number, total: number, title: string, status: string) => {
+        // Print progress every 25 entries or on the last one
+        if (current === total || current - lastPrinted >= 25) {
+          const pct = Math.round((current / total) * 100);
+          const icon = status === 'MATCH' ? '✅' : status === 'PARTIAL' ? '⚡' : status === 'MANUAL' ? '🔧' : '❌';
+          console.log(`  ${icon} [${current}/${total}] ${pct}% — ${title}`);
+          lastPrinted = current;
+        }
+      },
     });
 
     // Summary
