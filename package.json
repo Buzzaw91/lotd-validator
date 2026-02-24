@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "lexy": "npx tsx apps/cli/src/index.ts",
     "build": "pnpm -r run build",
     "test": "pnpm -r run test",
     "lint": "eslint . --ext .ts",
