@@ -2,6 +2,7 @@
 
 import { Command } from "commander";
 import { loadConfig, initConfig, doctorConfig, CONFIG_PATH } from "./config.js";
+import { runPreinstallCheck, formatPreinstallReport } from "./doctor-preinstall.js";
 import { syncGuide, buildManifest, formatDiagnostics } from "@lexy/guide-parser";
 import { resolveManifest, NexusClient } from "@lexy/nexus-resolver";
 import { buildQueue, renderTask } from "@lexy/install-queue-engine";
@@ -53,6 +54,31 @@ program
     } catch (err) {
       console.error(`❌ ${(err as Error).message}`);
     }
+  });
+
+// ── doctor-preinstall ──────────────────────────────────────────────
+
+program
+  .command("doctor-preinstall")
+  .description("Check system prerequisites, modding tools, and Skyrim folder")
+  .option("--tools-dir <path>", "Path to modding tools directory")
+  .option("--skyrim-path <path>", "Path to Skyrim SE installation")
+  .action(async (opts) => {
+    const config = await loadConfig();
+    const toolsDir = opts.toolsDir ?? config.toolsDir ?? "C:\\Programs";
+    const skyrimPath = opts.skyrimPath ?? config.skyrimPath;
+    const mo2Path = config.mo2?.portableRoot;
+
+    if (!skyrimPath) {
+      console.log("⚠️  Skyrim path not configured. Add \"skyrimPath\" to ~/.lexy-assistant/config.json or use --skyrim-path");
+    }
+    if (!mo2Path) {
+      console.log("⚠️  MO2 path not configured. Add \"mo2.portableRoot\" to config.json");
+    }
+
+    console.log("Checking prerequisites...");
+    const report = await runPreinstallCheck({ toolsDir, skyrimPath, mo2Path });
+    console.log(formatPreinstallReport(report, { toolsDir, skyrimPath, mo2Path }));
   });
 
 // ── sync-guide ──────────────────────────────────────────────────────

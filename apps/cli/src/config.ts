@@ -7,6 +7,8 @@ const ConfigSchema = z.object({
   nexusApiKey: z.string().min(1),
   guideBaseUrl: z.string().url().default("https://lexyslotd.com/guide/"),
   dataDir: z.string(),
+  toolsDir: z.string().optional(),
+  skyrimPath: z.string().optional(),
   mo2: z
     .object({
       portableRoot: z.string().optional(),

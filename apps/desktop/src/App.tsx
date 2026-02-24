@@ -101,7 +101,15 @@ export default function App() {
       <h2 className="text-xl font-semibold mb-4 text-pink-300">Guide Synchronization & Validation</h2>
       <p className="text-gray-400 text-sm">Download the latest lexyslotd.com guide pages, parse them into a local manifest, and check file versions against Nexus.</p>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+        <button 
+          disabled={isRunning}
+          onClick={() => runCommand('lexy', ['doctor-preinstall'])}
+          className="flex items-center justify-center space-x-2 bg-gray-800 hover:bg-gray-700 text-gray-200 p-4 rounded-lg border border-gray-600 transition-colors disabled:opacity-50"
+        >
+          <Settings size={20} />
+          <span>0. Check Prereqs</span>
+        </button>
         <button 
           disabled={isRunning}
           onClick={() => runCommand('lexy', ['sync-guide'])}
