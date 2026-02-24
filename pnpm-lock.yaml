@@ -302,6 +302,9 @@ importers:
       '@lexy/logger':
         specifier: workspace:*
         version: link:../logger
+      fast-glob:
+        specifier: ^3.3.3
+        version: 3.3.3
     devDependencies:
       '@types/node':
         specifier: ^25.3.0

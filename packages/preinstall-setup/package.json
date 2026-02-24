@@ -9,7 +9,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@lexy/logger": "workspace:*"
+    "@lexy/logger": "workspace:*",
+    "fast-glob": "^3.3.3"
   },
   "devDependencies": {
     "@types/node": "^25.3.0",

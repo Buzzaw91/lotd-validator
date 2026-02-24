@@ -22,6 +22,10 @@ export interface SetupTask {
   category: TaskCategory;
   /** Nexus mod ID (if downloadable from Nexus) */
   nexusModId?: number;
+  /** Strip the top-level folder if the archive only contains one folder */
+  flattenTopLevel?: boolean;
+  /** Specific strings to match against downloaded filenames. If omitted, uses name/checkFiles */
+  archiveMatch?: string[];
   /** Description of what this task does */
   description: string;
   /** Returns the target directory for this task */

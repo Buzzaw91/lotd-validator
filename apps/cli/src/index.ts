@@ -126,7 +126,9 @@ program
       
       for (const t of tasksToRun) {
         console.log(`\n⏳ ${t.name} [${t.category}]`);
-        const searchTerms = [t.name, ...t.checkFiles]; // Try name first, then checkFiles
+        const searchTerms = t.archiveMatch && t.archiveMatch.length > 0 
+          ? t.archiveMatch 
+          : [t.name, ...t.checkFiles]; // Try metadata first, then name/checkFiles
         const archive = await findArchiveInDownloads(mo2DownloadsDir, searchTerms);
         
         if (!archive) {
@@ -142,7 +144,7 @@ program
           sevenZipPath: sevenZip,
           archivePath: archive,
           targetDir,
-          taskId: t.id,
+          task: t,
           dryRun
         });
         

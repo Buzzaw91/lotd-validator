@@ -90,6 +90,8 @@ lotd_validator/
 |---------|-------------|
 | `config-init` | Create config with Nexus API key |
 | `doctor` | Check config, cache, and DB health |
+| `preinstall-check` | Check system prerequisites and tools |
+| `preinstall-setup` | Extract and deploy preinstallation archives |
 | `sync-guide` | Download/update cached guide HTML |
 | `build-manifest` | Parse HTML → `manifest.json` |
 | `validate` | Check files against Nexus API |

@@ -1,0 +1,195 @@
+
+7-Zip 19.00 (x64) : Copyright (c) 1999-2018 Igor Pavlov : 2019-02-21
+
+Scanning the drive for archives:
+1 file, 306885 bytes (300 KiB)
+
+Listing archive: C:\Programs\MO2\downloads\Lexys LOTD - Conflict Resolution-85672-2-16-1758803524.7z
+
+--
+Path = C:\Programs\MO2\downloads\Lexys LOTD - Conflict Resolution-85672-2-16-1758803524.7z
+Type = 7z
+Physical Size = 306885
+Headers Size = 3683
+Method = LZMA2:20
+Solid = +
+Blocks = 1
+
+   Date      Time    Attr         Size   Compressed  Name
+------------------- ----- ------------ ------------  ------------------------
+2025-09-10 14:59:22 D....            0            0  Lexy's LOTD - Conflict Resolution - v2.16 RC4
+2025-09-10 14:59:22 D....            0            0  Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags
+2025-09-10 09:29:16 D....            0            0  Lexy's LOTD - Conflict Resolution - v2.16 RC4\Changelogs
+2025-09-10 14:59:22 D....            0            0  Lexy's LOTD - Conflict Resolution - v2.16 RC4\Dyndolod
+2025-09-10 09:29:16 D....            0            0  Lexy's LOTD - Conflict Resolution - v2.16 RC4\MCM
+2025-09-10 14:59:22 D....            0            0  Lexy's LOTD - Conflict Resolution - v2.16 RC4\MCM\Settings
+2025-06-23 16:09:14 ....A        25718       303202  Lexy's LOTD - Conflict Resolution - v2.16 RC4\Bash Tag Changelog.txt
+2023-09-25 14:54:34 ....A           64               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\018Auri.txt
+2023-09-25 14:54:34 ....A           53               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\0Kaidan.txt
+2023-09-25 14:54:34 ....A           77               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\3DNPC - ELE Consistency Patch.txt
+2023-09-25 14:54:34 ....A           54               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\AcousticTemplateFixes_CC_Seducers_EC.txt
+2023-09-25 14:54:34 ....A           54               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\AHZBetterDGEntranceSE-ELFXPatch.txt
+2023-09-25 14:54:34 ....A          193               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Animals Merged.txt
+2023-09-25 14:54:34 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\AOS_Cathedral Weathers Patch.txt
+2023-09-25 14:54:34 ....A           82               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Audio Overhaul Skyrim.txt
+2023-09-25 14:54:34 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\CACO Rare Curios Patch.txt
+2023-09-25 14:54:34 ....A           56               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Cannibal Draugr Upgrades and Improvements Patch.txt
+2023-09-25 14:54:34 ....A           56               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\CC Misc Patches - Rare Curios Additions.txt
+2023-09-25 14:54:34 ....A           56               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\CC Misc Patches - Saints and Seducers.txt
+2023-09-25 14:54:34 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\CC-Fishing_CACO_Patch.txt
+2023-09-25 14:54:34 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\CC-Fishing_CCOR_Patch.txt
+2025-06-23 14:47:17 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\CCOR Bandolier patch fixes.txt
+2023-09-25 14:54:34 ....A          136               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\CCOR Patches Merged.txt
+2023-09-25 14:54:34 ....A           57               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\CCOR_JSwords_Patch.txt
+2023-09-25 14:54:34 ....A           68               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Crossbow Integration - OWL.txt
+2023-09-25 14:54:34 ....A           55               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Crossbow Integration - Rare Curios Bolts Expanded WACCF-MLU.txt
+2023-09-25 14:54:34 ....A           55               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Crossbow Integration - Rare Curios Bolts Expanded.txt
+2023-09-25 14:54:34 ....A           55               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Crossbow Integration - Rare Curios Bolts.txt
+2023-09-25 14:54:34 ....A           88               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Crossbow Integration.txt
+2023-09-25 14:54:34 ....A           70               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\DawnguardArsenal.txt
+2023-09-25 14:54:34 ....A           91               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\DawnguardArsenal_CCOR_Patch.txt
+2023-09-25 14:54:34 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\DBM_CC_FishingHOWPatch.txt
+2023-09-25 14:54:34 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\DBM_CC_Fish_HASynergy.txt
+2023-09-25 14:54:34 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\DBM_CC_SaintsSeducersHOWPatch.txt
+2023-09-25 14:54:34 ....A           52               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\DBM_MorrowlootUltimate_Patch.txt
+2023-09-25 14:54:34 ....A           48               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\DBM_RoyalArmory_Patch.txt
+2023-09-25 14:54:34 ....A           54               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\DBM_VolkiharKnight_Patch.txt
+2023-09-25 14:54:34 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Deadly Dragons - DDC and Splendor.txt
+2023-09-25 14:54:34 ....A          153               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\DeadlyDragons.txt
+2023-09-25 14:54:34 ....A          123               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Draugr Upgrades and Improvements.txt
+2023-09-25 14:54:34 ....A          131               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\ELE Patches Merged.txt
+2023-09-25 14:54:34 ....A          116               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\ELE-ELFX Patch AIO.txt
+2023-09-25 14:54:34 ....A          188               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\ELE_SSE.txt
+2023-09-25 14:54:34 ....A           63               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\ELFX Fixes Ragged Flagon Fix.txt
+2023-09-25 14:54:34 ....A          152               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\ELFX Fixes.txt
+2023-09-25 14:54:34 ....A           68               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\ENB Light.txt
+2023-09-25 14:54:34 ....A          151               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\EnhancedLightsandFX.txt
+2025-07-22 18:08:29 ....A           60               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\FGCAxeOfFierySoulsTrulyUnique.txt
+2023-09-25 14:54:34 ....A           51               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Helgen Reborn.txt
+2025-09-10 14:34:56 ....A           52               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\HFs_AretinoFamily_Heirloom.txt
+2023-09-25 14:54:34 ....A          134               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Immersive Citizens - AI Overhaul.txt
+2023-09-25 14:54:34 ....A          106               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Immersive Citizens - ELE patch.txt
+2023-09-25 14:54:34 ....A          132               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Imperious - Disparity Compatibility Patch.txt
+2023-09-25 14:54:34 ....A           61               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\imp_helm_legend - WACCF + RoM Patch.txt
+2023-09-25 14:54:34 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\ISC Enhanced Blood Patch.txt
+2023-09-25 14:54:34 ....A           52               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\iWant RND for CACO with Lexy's LOTD.txt
+2023-09-25 14:54:34 ....A           52               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\JS Purses and Septims SE Patch.txt
+2023-09-25 14:54:34 ....A           55               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\KIC + RWT Patches Merged.txt
+2023-09-25 14:54:34 ....A          196               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Konahrik's Accoutrements - Consistency Patch.txt
+2023-09-25 14:54:34 ....A           52               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lanterns Of Wyrmstooth.txt
+2023-09-25 14:54:34 ....A           52               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\LCO_BleakwindBluff.txt
+2023-09-25 14:54:34 ....A           52               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\LCO_MolderingRuin.txt
+2023-09-25 14:54:34 ....A           52               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\LCO_RedwaterDen.txt
+2023-09-25 14:54:34 ....A           52               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\LCO_StendarrsBeacon.txt
+2023-09-25 14:54:34 ....A          247               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\LegacyoftheDragonborn.txt
+2023-09-25 14:54:34 ....A          230               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lexy's LOTD Consistency Patches Merged.txt
+2023-09-25 14:54:34 ....A          463               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lexy's LOTD SE - Conflict Resolution.txt
+2023-09-25 14:54:34 ....A           68               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\LockRelatedLoot.txt
+2023-09-25 14:54:34 ....A           54               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\LoS II - Dragon Bridge patch.txt
+2023-09-25 14:54:34 ....A           68               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux - 3DNPC patch.txt
+2023-09-25 14:54:34 ....A           78               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux - Blue Palace Terrace patch 3.txt
+2023-09-25 14:54:34 ....A           64               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux - Books of Skyrim.txt
+2023-09-25 14:54:34 ....A           64               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux - ClefJ's Winterhold.txt
+2023-09-25 14:54:34 ....A          147               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux - Conflict Resolution.txt
+2023-09-25 14:54:34 ....A           51               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux - Embers XD patch.txt
+2023-09-25 14:54:34 ....A           88               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux - Forgotten City.txt
+2023-09-25 14:54:34 ....A           51               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux - Immersive Citizens patch.txt
+2023-09-25 14:54:34 ....A           86               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux - JK's Bannered Mare patch.txt
+2023-09-25 14:54:34 ....A           78               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux - JK's Drunken Huntsman patch.txt
+2023-09-25 14:54:34 ....A           51               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux - Legacy of the Dragonborn - Aetherium Weapons.txt
+2023-09-25 14:54:34 ....A           51               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux - Skyrim Sewers.txt
+2023-09-25 14:54:34 ....A           64               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux - Solitude Docks patch.txt
+2023-09-25 14:54:34 ....A           64               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux - Stendarr Rising patch.txt
+2023-09-25 14:54:34 ....A           75               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux - Tools of Kagrenac patch.txt
+2023-09-25 14:54:34 ....A           51               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux - Water for ENB patch.txt
+2023-09-25 14:54:34 ....A           64               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux - Wyrmstooth.txt
+2023-09-25 14:54:34 ....A           51               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux-LuxOrbis-TGoCShorStone-NoLights.txt
+2023-09-25 14:54:34 ....A           53               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Lux.txt
+2023-09-25 14:54:34 ....A           86               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Miscellaneous Merged.txt
+2023-09-25 14:54:34 ....A          250               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\MLU Patches Merged.txt
+2023-09-25 14:54:34 ....A          104               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\MLU.txt
+2023-09-25 14:54:34 ....A           65               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Modest-FrostfallFood-Merged.txt
+2023-09-25 14:54:34 ....A           52               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\mpThievesNightOnTheTown.txt
+2023-09-25 14:54:34 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Mystic Condenser.txt
+2023-09-25 14:54:34 ....A          112               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\NoGrassINCaves.txt
+2023-09-25 14:54:34 ....A           61               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\No_Quest_Startups.txt
+2023-09-25 14:54:34 ....A          286               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\NPC Retexture Merge SSE.txt
+2023-09-25 14:54:34 ....A           76               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\NSUTR - Merged.txt
+2023-09-25 14:54:34 ....A          150               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\OBIS SE.txt
+2023-09-25 14:54:34 ....A          144               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\OBIS WACCF Patch.txt
+2023-09-25 14:54:34 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\ogSplendorDragons.txt
+2023-09-25 14:54:34 ....A          159               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\OMEGA CACO Patches Merged.txt
+2023-09-25 14:54:34 ....A           48               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\OMEGA Enai Patch - no Nomadic Heritage.txt
+2023-09-25 14:54:34 ....A           55               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Open World Loot - CC Fishing Patch.txt
+2023-09-25 14:54:34 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Open World Loot - Immersive Armors.txt
+2023-09-25 14:54:34 ....A           55               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Open World Loot - MLU Patch.txt
+2023-09-25 14:54:34 ....A           55               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\OWL - Heavy Armory.txt
+2023-09-25 14:54:34 ....A           55               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\OWL - Lore Weapon Expansion.txt
+2023-09-25 14:54:34 ....A           55               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\OWL_AMB_CA_Patch.txt
+2023-09-25 14:54:34 ....A           52               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\potion remodels caco patch.txt
+2023-09-25 14:54:34 ....A          122               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Pre Bash Merged.txt
+2023-09-25 14:54:34 ....A           55               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Predator Vision.txt
+2023-09-25 14:54:34 ....A           65               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Prometheus_No_snow_Under_the_roof.txt
+2023-09-25 14:54:34 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\PrvtIRoyalArmory - Experience fix.txt
+2023-09-25 14:54:34 ....A           59               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\PrvtI_HeavyArmory_CCOR_AMB_Patch.txt
+2023-09-25 14:54:34 ....A           58               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\PrvtI_HeavyArmory_CCOR_Patch.txt
+2023-09-25 14:54:34 ....A           58               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Qw_CACO_3DNPC Patch.txt
+2023-09-25 14:54:34 ....A           77               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Qw_WACCF_ISC Patch.txt
+2023-09-25 14:54:34 ....A          125               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\RealisticWaterTwo.txt
+2023-09-25 14:54:34 ....A          193               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\RevampedReleveled.txt
+2023-09-25 14:54:34 ....A           52               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\RoM - ICH - WACCF Patch.txt
+2023-09-25 14:54:34 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\RoM - ISC Patch.txt
+2023-09-25 14:54:34 ....A           52               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\RoM - WACCF Patch.txt
+2023-09-25 14:54:34 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Royal Armory Tweaks.txt
+2023-09-25 14:54:34 ....A           95               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\SailorMoonClub.txt
+2023-09-25 14:54:34 ....A           58               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Saints&SeducersExtendedCut_CCOR.txt
+2023-09-25 14:54:34 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\SBWE-ISC Patch.txt
+2023-09-25 14:54:34 ....A           82               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Silver Arrows.txt
+2023-09-25 14:54:34 ....A           55               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\SilverHandImprovements.txt
+2023-09-25 14:54:34 ....A           64               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Simple Bound Weapons Expansion.txt
+2023-09-25 14:54:34 ....A          139               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\SklyrimSewers.txt
+2023-09-25 14:54:34 ....A           65               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\SkyrimCoinReplacerRedux.txt
+2023-09-25 14:54:34 ....A           93               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\SkyrimRevampedCEO_WACCF_Patch.txt
+2023-09-25 14:54:34 ....A           61               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\SkyTEST-Redux.txt
+2023-09-25 14:54:34 ....A           52               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\SkyTEST_ Redux_CACO_Patch.txt
+2023-09-25 14:54:34 ....A           58               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Snazzy Furniture and Clutter Overhaul.txt
+2023-09-25 14:54:34 ....A          165               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Snazzy Overhaul Patches Merged.txt
+2023-09-25 14:54:34 ....A           64               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Solitude Docks.txt
+2023-09-25 14:54:34 ....A          124               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Soljund's Sinkhole.txt
+2023-09-25 14:54:34 ....A          103               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Sound Consistency Patch - Lexy Guide.txt
+2023-09-25 14:54:34 ....A           52               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\SunHelm_3DNPC.txt
+2023-09-25 14:54:34 ....A           48               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\TESL-LS-AddonSacrosanct.txt
+2025-07-22 18:08:39 ....A           58               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Thaumaturgy_WACCF_ACE_AMB.txt
+2025-06-22 20:59:31 ....A           61               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Thieves Guild Reformation.txt
+2023-09-25 14:54:34 ....A           69               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\ToTB ELE - Consistency Patch.txt
+2023-09-25 14:54:34 ....A          176               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\TSR_TeldrynSerious.txt
+2023-09-25 14:54:34 ....A           61               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\TSR_TeldrynSeriousPatch.txt
+2023-09-25 14:54:34 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\USMP - CACO Patch.txt
+2023-09-25 14:54:34 ....A          114               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\WACCF_Armor and Clothing Extension.txt
+2023-09-25 14:54:34 ....A           84               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\WarmongerArmoryLoremonger_CCOR_Patch.txt
+2023-09-25 14:54:34 ....A           49               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\WarmongerArmory_ACE_Patch.txt
+2023-09-25 14:54:34 ....A           55               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\WarmongerArmory_AMB_Patch.txt
+2023-09-25 14:54:34 ....A           90               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\WarmongerArmory_SSE.txt
+2023-09-25 14:54:34 ....A           51               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Water for ENB (Shades of Skyrim).txt
+2023-09-25 14:54:34 ....A           51               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Weapons Armor Clothing & Clutter Fixes.txt
+2023-09-25 14:54:34 ....A          140               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Weapons Armours Merged - Copy.txt
+2023-09-25 14:54:34 ....A          140               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Weapons Armours Merged.txt
+2023-09-25 14:54:34 ....A           89               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\Windhelm Lighthouse.txt
+2023-09-25 14:54:34 ....A          140               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\World Encounter Addon Patches Merged.txt
+2023-09-25 14:54:34 ....A           73               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\WZOblivionArtifacts.txt
+2023-09-25 14:54:34 ....A           63               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\YOT - Your Own Thoughts Merged.txt
+2023-09-25 14:54:34 ....A           71               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\ZIA_Complete Pack.txt
+2023-09-25 14:54:34 ....A           52               Lexy's LOTD - Conflict Resolution - v2.16 RC4\BashTags\ZimsImmersiveArtifacts_WACCF_Patch.txt
+2025-08-24 12:49:33 ....A       179379               Lexy's LOTD - Conflict Resolution - v2.16 RC4\Changelogs\Lexy's LOTD SE - Conflict Resolution.txt
+2023-09-25 14:54:34 ....A          104               Lexy's LOTD - Conflict Resolution - v2.16 RC4\Dyndolod\DynDOLOD_SSE_JKsHighHrothgaresp.ini
+2024-06-30 14:54:48 ....A           96               Lexy's LOTD - Conflict Resolution - v2.16 RC4\Dyndolod\DynDOLOD_SSE_RynsAzurasShrineesp_high.ini
+2024-06-30 14:56:55 ....A           96               Lexy's LOTD - Conflict Resolution - v2.16 RC4\Dyndolod\DynDOLOD_SSE_RynsAzurasShrineesp_low.ini
+2024-06-30 14:57:03 ....A           96               Lexy's LOTD - Conflict Resolution - v2.16 RC4\Dyndolod\DynDOLOD_SSE_RynsAzurasShrineesp_medium.ini
+2025-08-29 15:19:25 ....A       693594               Lexy's LOTD - Conflict Resolution - v2.16 RC4\Lexy's LOTD SE - Conflict Resolution.esp
+2025-07-21 10:26:27 ....A          540               Lexy's LOTD - Conflict Resolution - v2.16 RC4\Lexy's LOTD SE - Conflict Resolution.modgroups
+2023-09-25 14:54:36 ....A           95               Lexy's LOTD - Conflict Resolution - v2.16 RC4\MCM\Settings\HelgenReborn_MCM.ini
+2023-09-25 14:54:36 ....A          278               Lexy's LOTD - Conflict Resolution - v2.16 RC4\MCM\Settings\Predator Vision.ini
+2023-09-25 14:54:36 ....A          184               Lexy's LOTD - Conflict Resolution - v2.16 RC4\MCM\Settings\RadiantRequirements.ini
+2025-08-29 09:13:40 ....A          806               Lexy's LOTD - Conflict Resolution - v2.16 RC4\meta.ini
+------------------- ----- ------------ ------------  ------------------------
+2025-09-10 14:59:22             914060       303202  168 files, 6 folders

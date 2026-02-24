@@ -1,8 +1,10 @@
 import { execFile } from "node:child_process";
-import { access, readdir, copyFile, mkdir } from "node:fs/promises";
+import { access, readdir, copyFile, mkdir, rm, cp } from "node:fs/promises";
 import { join, basename } from "node:path";
 import { promisify } from "node:util";
-import type { SetupResult, PathConfig } from "./types.js";
+import { tmpdir } from "node:os";
+import glob from "fast-glob";
+import type { SetupResult, PathConfig, SetupTask } from "./types.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -113,31 +115,99 @@ export async function findArchiveInDownloads(
 }
 
 /**
- * Execute a setup task (dry-run or real).
+ * Executes a file setup task by extracting the archive to a temporary directory,
+ * stripping wrapping folders if needed, applying glob patterns, and copying
+ * strictly matched items to the final directory.
  */
 export async function executeSetupTask(opts: {
   sevenZipPath: string;
   archivePath: string;
   targetDir: string;
-  taskId: string;
+  task: SetupTask;
   dryRun: boolean;
 }): Promise<SetupResult> {
   if (opts.dryRun) {
     return {
-      taskId: opts.taskId,
+      taskId: opts.task.id,
       success: true,
       filesExtracted: 0,
       detail: `[DRY RUN] Would extract ${basename(opts.archivePath)} → ${opts.targetDir}`,
     };
   }
 
-  const result = await extractArchive(opts.sevenZipPath, opts.archivePath, opts.targetDir);
-  return {
-    taskId: opts.taskId,
-    success: result.success,
-    filesExtracted: result.success ? -1 : 0, // -1 = unknown count
-    detail: result.success
-      ? `Extracted to ${opts.targetDir}`
-      : `Failed: ${result.output}`,
-  };
+  const tempId = `lexy-setup-${opts.task.id}-${Date.now()}`;
+  const tempExtractDir = join(tmpdir(), tempId);
+  await mkdir(tempExtractDir, { recursive: true });
+
+  try {
+    const extractRes = await extractArchive(opts.sevenZipPath, opts.archivePath, tempExtractDir);
+    if (!extractRes.success) {
+      return {
+        taskId: opts.task.id,
+        success: false,
+        filesExtracted: 0,
+        detail: `Extraction failed: ${extractRes.output}`,
+      };
+    }
+
+    let actualRoot = tempExtractDir;
+    if (opts.task.flattenTopLevel) {
+      const contents = await readdir(actualRoot, { withFileTypes: true });
+      if (contents.length === 1 && contents[0].isDirectory()) {
+        actualRoot = join(actualRoot, contents[0].name);
+      }
+    }
+
+    const patterns = opts.task.sourcePattern && opts.task.sourcePattern.length > 0
+      ? opts.task.sourcePattern
+      : ["*"];
+
+    // fast-glob requires forward slashes
+    const matchBase = actualRoot.replace(/\\/g, "/");
+    const globPatterns = patterns.map((p) => join(matchBase, p).replace(/\\/g, "/"));
+
+    const matchedPaths = await glob(globPatterns, {
+      onlyFiles: false, 
+      absolute: true
+    });
+
+    if (matchedPaths.length === 0) {
+      return {
+        taskId: opts.task.id,
+        success: false,
+        filesExtracted: 0,
+        detail: `No files matching pattern "${patterns.join(", ")}" found in archive.`,
+      };
+    }
+
+    await mkdir(opts.targetDir, { recursive: true });
+    let copied = 0;
+
+    for (const match of matchedPaths) {
+      // Return to OS-specific path separators
+      const srcPath = match.replace(/\//g, "\\");
+      // Map matched basename to target dir directly
+      const destPath = join(opts.targetDir, basename(srcPath));
+
+      await cp(srcPath, destPath, { recursive: true, force: true });
+      copied++;
+    }
+
+    return {
+      taskId: opts.task.id,
+      success: true,
+      filesExtracted: copied,
+      detail: `Extracted to ${opts.targetDir}`,
+    };
+  } catch (err: any) {
+    return {
+      taskId: opts.task.id,
+      success: false,
+      filesExtracted: 0,
+      detail: err.message,
+    };
+  } finally {
+    // Cleanup temporary extraction root
+    await rm(tempExtractDir, { recursive: true, force: true }).catch(() => {});
+  }
 }

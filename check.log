@@ -1,0 +1,54 @@
+
+> lexy-assistant@ lexy C:\Programs\lotd_validator
+> npx tsx apps/cli/src/index.ts "preinstall-check"
+
+(node:3748) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
+Checking prerequisites...
+
+🔍 Preinstallation Prerequisites Check
+
+📦 System Prerequisites
+  ✅ .NET Framework 4.8+ — v4.8.1 (release 533509)
+  ✅ VC++ Redist 2015-2022 (x64) — v14.44.35211
+
+🛠️ Modding Tools (C:\Programs)
+  ✅ LOOT — C:\Programs\LOOT\LOOT.exe
+  ✅ xEdit — C:\Programs\xEdit\SSEEdit.exe
+  ✅ DynDOLOD — C:\Programs\DynDOLOD Special Edition\DynDOLODx64.exe
+  ✅ xLODGen — C:\Programs\xLODGen\xLODGenx64.exe
+  ✅ Synthesis — C:\Programs\Synthesis\Synthesis.exe
+  ✅ BethINI Pie — C:\Programs\Bethini Pie\Bethini.exe
+  ✅ Cathedral Assets Optimizer — C:\Programs\Cathedral Assets Optimizer\Cathedral_Assets_Optimizer.exe
+  ✅ Wrye Bash — C:\Programs\Wrye Bash\Wrye Bash.exe
+  ✅ zEdit — C:\Programs\zEdit_v0.6.7\zEdit.exe
+  ✅ ACMOS Road Generator — C:\Programs\ACMOS Road Generator\ACMOS Road Generator.exe
+  ✅ Nemesis — C:\Programs\Nemesis Unlimited Behavior Engine\Nemesis_Engine\Nemesis Unlimited Behavior Engine.exe
+  ❌ MO2 Conflict Manager — Folder not found: MO2 Conflict Manager*
+
+📜 xEdit Scripts (C:\Programs\xEdit)
+  ✅ mxpf (Mator's xEdit Patching Framework) — Found: mxpf.pas
+  ❌ TES5EditScripts — Not found: _de_lists.pas
+  ❌ WICO cleanup script — Not found: Hishy_NPC_RecordForwarding.pas
+  ❌ Dark Face Issue Reporter — Not found: DarkFaceIssueReporter.pas
+  ✅ Dark Face Issue Reporter Ignore — Found: darkfaceissuereporter.ini
+
+🔌 MO2 Plugins (C:\Programs\MO2)
+  ✅ MO2: Autoscroller — Found
+  ❌ MO2: Merge Plugins Hide — Not found in plugins/
+  ❌ MO2: MO2 File Removal Tool — Not found in plugins/
+  ❌ MO2: Prepare Merge — Not found in plugins/
+  ❌ MO2: Remember Installation Choices — Not found in plugins/
+  ✅ MO2: Set CPU Affinity — Found
+
+🎮 Skyrim Folder (C:\Programs\Steam\steamapps\common\Skyrim Special Edition)
+  ✅ Skyrim SE — Found: SkyrimSE.exe
+  ❌ SKSE64 — skse64_loader.exe not found
+  ❌ ENB Binaries — d3d11.dll not found
+  ✅ Creation Kit — Found: CreationKit.exe
+
+📋 Tool Profiles (C:\Programs)
+  ✅ Synthesis: Lexy's Profile — Found
+  ❌ CAO: Lexy's Profiles — No Lexy profiles found
+
+📊 Summary: 20 passed, 11 missing, 0 warnings
