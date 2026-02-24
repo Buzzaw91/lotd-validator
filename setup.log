@@ -1,0 +1,79 @@
+
+> lexy-assistant@ lexy C:\Programs\lotd_validator
+> npx tsx apps/cli/src/index.ts "preinstall-setup" "--all" "--confirm"
+
+(node:34056) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
+🚀 EXECUTING file operations
+
+⏳ mxpf (Mator's xEdit Patching Framework) [xedit-script]
+  ❌ Could not find downloaded archive in MO2 downloads.
+  🔎 Looked for filenames containing: mxpf (Mator's xEdit Patching Framework) or mxpf.pas
+
+⏳ TES5EditScripts [xedit-script]
+  📦 Found archive: C:\Programs\MO2\downloads\TES5EditScripts.zip
+  ✅ Extracted to C:\Programs\xEdit\Edit Scripts
+
+⏳ WICO cleanup script [xedit-script]
+  ❌ Could not find downloaded archive in MO2 downloads.
+  🔎 Looked for filenames containing: WICO cleanup script or Hishy_NPC_RecordForwarding.pas
+
+⏳ Dark Face Issue Reporter [xedit-script]
+  ❌ Could not find downloaded archive in MO2 downloads.
+  🔎 Looked for filenames containing: Dark Face Issue Reporter or DarkFaceIssueReporter.pas
+
+⏳ Dark Face Issue Reporter Ignore [xedit-script]
+  ❌ Could not find downloaded archive in MO2 downloads.
+  🔎 Looked for filenames containing: Dark Face Issue Reporter Ignore or darkfaceissuereporter.ini
+
+⏳ Autoscroller [mo2-plugin]
+  📦 Found archive: C:\Programs\MO2\downloads\autoscroller-165507-1-4-1764125991.zip
+  ✅ Extracted to C:\Programs\MO2\plugins
+
+⏳ Merge Plugins Hide [mo2-plugin]
+  📦 Found archive: C:\Programs\MO2\downloads\Merge Plugins Hide.zip
+  ✅ Extracted to C:\Programs\MO2\plugins
+
+⏳ MO2 File Removal Tool [mo2-plugin]
+  📦 Found archive: C:\Programs\MO2\downloads\MO2 File Removal Tool-117306-2-4-1-1735793352.zip
+  ✅ Extracted to C:\Programs\MO2\plugins
+
+⏳ Prepare Merge [mo2-plugin]
+  📦 Found archive: C:\Programs\MO2\downloads\Prepare Merge-47791-1-2-3-1701624962.7z
+  ✅ Extracted to C:\Programs\MO2\plugins
+
+⏳ Remember Installation Choices [mo2-plugin]
+  📦 Found archive: C:\Programs\MO2\downloads\Remember Installation Choices-140678-1-0-0-1738501388.zip
+  ✅ Extracted to C:\Programs\MO2\plugins
+
+⏳ Set CPU Affinity [mo2-plugin]
+  📦 Found archive: C:\Programs\MO2\downloads\Set CPU Affinity-94636-1-2-0-1688135119.zip
+  ✅ Extracted to C:\Programs\MO2\plugins
+
+⏳ SKSE64 [skyrim-folder]
+  ❌ Could not find downloaded archive in MO2 downloads.
+  🔎 Looked for filenames containing: SKSE64 or skse64_loader.exe
+
+⏳ ENB Series Binaries [skyrim-folder]
+  ❌ Could not find downloaded archive in MO2 downloads.
+  🔎 Looked for filenames containing: ENB Series Binaries or d3d11.dll
+
+⏳ Ljoss ReLUX [skyrim-folder]
+  📦 Found archive: C:\Programs\MO2\downloads\0 - Ljoss ReLUX - Full Version-63578-1-2-1655563864.7z
+  ✅ Extracted to C:\Programs\Steam\steamapps\common\Skyrim Special Edition
+
+⏳ Ljoss ELFX Changes [skyrim-folder]
+  ❌ Could not find downloaded archive in MO2 downloads.
+  🔎 Looked for filenames containing: Ljoss ELFX Changes or weather_elfx.esp
+
+⏳ Creation Kit Platform Extended [skyrim-folder]
+  ❌ Could not find downloaded archive in MO2 downloads.
+  🔎 Looked for filenames containing: Creation Kit Platform Extended or winhttp.dll
+
+⏳ Lexy's LOTD Synthesis Profile [tool-profile]
+  📦 Found archive: C:\Programs\MO2\downloads\Lexys LOTD - Conflict Resolution-85672-2-16-1758803524.7z
+  ✅ Extracted to C:\Programs\Synthesis
+
+⏳ Lexy's LOTD CAO Profiles [tool-profile]
+  ❌ Could not find downloaded archive in MO2 downloads.
+  🔎 Looked for filenames containing: Lexy's LOTD CAO Profiles or profiles

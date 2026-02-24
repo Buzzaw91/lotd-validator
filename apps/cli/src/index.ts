@@ -2,7 +2,7 @@
 
 import { Command } from "commander";
 import { loadConfig, initConfig, doctorConfig, CONFIG_PATH } from "./config.js";
-import { runPreinstallCheck, formatPreinstallReport } from "./doctor-preinstall.js";
+import { runPreinstallCheck, formatPreinstallReport, find7Zip, findArchiveInDownloads, executeSetupTask, SETUP_TASKS } from "@lexy/preinstall-setup";
 import { syncGuide, buildManifest, formatDiagnostics } from "@lexy/guide-parser";
 import { resolveManifest, NexusClient } from "@lexy/nexus-resolver";
 import { buildQueue, renderTask } from "@lexy/install-queue-engine";
@@ -56,11 +56,11 @@ program
     }
   });
 
-// ── doctor-preinstall ──────────────────────────────────────────────
+// ── preinstall-check ──────────────────────────────────────────────
 
 program
-  .command("doctor-preinstall")
-  .description("Check system prerequisites, modding tools, and Skyrim folder")
+  .command("preinstall-check")
+  .description("Check system prerequisites, modding tools, xEdit scripts, MO2 plugins, and Skyrim folder")
   .option("--tools-dir <path>", "Path to modding tools directory")
   .option("--skyrim-path <path>", "Path to Skyrim SE installation")
   .action(async (opts) => {
@@ -79,6 +79,80 @@ program
     console.log("Checking prerequisites...");
     const report = await runPreinstallCheck({ toolsDir, skyrimPath, mo2Path });
     console.log(formatPreinstallReport(report, { toolsDir, skyrimPath, mo2Path }));
+  });
+
+// ── preinstall-setup ──────────────────────────────────────────────
+
+program
+  .command("preinstall-setup")
+  .description("Automate preinstall file operations (extract archives, copy files)")
+  .option("--tools-dir <path>", "Path to modding tools directory")
+  .option("--skyrim-path <path>", "Path to Skyrim SE installation")
+  .option("--task <id>", "Run a specific task by ID")
+  .option("--category <name>", "Run all tasks in a category")
+  .option("--all", "Run all automatable tasks")
+  .option("--confirm", "Actually execute file operations (otherwise dry-run)")
+  .action(async (opts) => {
+    const config = await loadConfig();
+    const toolsDir = opts.toolsDir ?? config.toolsDir ?? "C:\\Programs";
+    const skyrimPath = opts.skyrimPath ?? config.skyrimPath;
+    const mo2Path = config.mo2?.portableRoot;
+    const mo2DownloadsDir = config.mo2?.downloadsDir ?? (mo2Path ? join(mo2Path, "downloads") : undefined);
+
+    if (!skyrimPath) {
+      console.log("⚠️  Skyrim path not configured. Add \"skyrimPath\" to ~/.lexy-assistant/config.json");
+    }
+    if (!mo2Path || !mo2DownloadsDir) {
+      console.log("⚠️  MO2 path not configured. Add \"mo2.portableRoot\" to config.json");
+      process.exit(1);
+    }
+    
+    let tasksToRun: typeof SETUP_TASKS = [];
+    if (opts.all) tasksToRun = SETUP_TASKS;
+    else if (opts.category) tasksToRun = SETUP_TASKS.filter(t => t.category === opts.category);
+    else if (opts.task) tasksToRun = SETUP_TASKS.filter(t => t.id === opts.task);
+    
+    if (tasksToRun.length === 0) {
+      console.log("❌ No tasks selected. Use --all, --category <name>, or --task <id>");
+      process.exit(1);
+    }
+    
+    const paths = { toolsDir, skyrimPath, mo2Path, mo2DownloadsDir };
+    const dryRun = !opts.confirm;
+    console.log(dryRun ? "🔍 DRY RUN: Previewing file operations\nUse --confirm to execute them." : "🚀 EXECUTING file operations");
+    
+    try {
+      const sevenZip = await find7Zip();
+      
+      for (const t of tasksToRun) {
+        console.log(`\n⏳ ${t.name} [${t.category}]`);
+        const searchTerms = t.archiveMatch && t.archiveMatch.length > 0 
+          ? t.archiveMatch 
+          : [t.name, ...t.checkFiles]; // Try metadata first, then name/checkFiles
+        const archive = await findArchiveInDownloads(mo2DownloadsDir, searchTerms);
+        
+        if (!archive) {
+          console.log(`  ❌ Could not find downloaded archive in MO2 downloads.`);
+          console.log(`  🔎 Looked for filenames containing: ${searchTerms.join(" or ")}`);
+          continue;
+        }
+        
+        const targetDir = t.getTargetDir(paths);
+        console.log(`  📦 Found archive: ${archive}`);
+        
+        const result = await executeSetupTask({
+          sevenZipPath: sevenZip,
+          archivePath: archive,
+          targetDir,
+          task: t,
+          dryRun
+        });
+        
+        console.log(result.success ? `  ✅ ${result.detail}` : `  ❌ ${result.detail}`);
+      }
+    } catch (err: any) {
+      console.error(`❌ Failed: ${err.message}`);
+    }
   });
 
 // ── sync-guide ──────────────────────────────────────────────────────

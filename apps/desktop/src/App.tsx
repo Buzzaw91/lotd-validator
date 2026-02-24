@@ -104,7 +104,7 @@ export default function App() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
         <button 
           disabled={isRunning}
-          onClick={() => runCommand('lexy', ['doctor-preinstall'])}
+          onClick={() => runCommand('lexy', ['preinstall-check'])}
           className="flex items-center justify-center space-x-2 bg-gray-800 hover:bg-gray-700 text-gray-200 p-4 rounded-lg border border-gray-600 transition-colors disabled:opacity-50"
         >
           <Settings size={20} />

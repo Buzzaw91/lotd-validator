@@ -19,6 +19,7 @@
     "@lexy/mo2-observer": "workspace:*",
     "@lexy/mod-downloader": "workspace:*",
     "@lexy/nexus-resolver": "workspace:*",
+    "@lexy/preinstall-setup": "workspace:*",
     "@lexy/session-store": "workspace:*",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",

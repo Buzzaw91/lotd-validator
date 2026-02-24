@@ -96,7 +96,21 @@ The tool follows a **pipeline** — each step feeds into the next:
 sync-guide → build-manifest → validate → download → queue/next → mark-done
 ```
 
-### Step 1: Sync the Guide
+### Step 1: Preinstallation Setup
+
+Before starting the automated guide installation, ensure all system prerequisites, Modding Tools, MO2 plugins, xEdit scripts, and Skyrim dependencies match the guide's explicit preinstallation requirements.
+
+```bash
+lexy preinstall-check
+```
+
+If anything is missing, download the required mod archives into your `MO2/downloads` folder, then run the automated file extractor to deploy them precisely to where they belong:
+
+```bash
+lexy preinstall-setup --all --confirm
+```
+
+### Step 2: Sync the Guide
 
 Download the latest Lexy guide HTML pages to your local cache:
 
