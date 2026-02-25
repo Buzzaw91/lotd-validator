@@ -7,3 +7,4 @@ export {
   formatDiagnostic,
   formatDiagnostics,
 } from "./diagnostics.js";
+export * from "./manifest-differ.js";

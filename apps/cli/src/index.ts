@@ -3,7 +3,7 @@
 import { Command } from "commander";
 import { loadConfig, initConfig, doctorConfig, CONFIG_PATH } from "./config.js";
 import { runPreinstallCheck, formatPreinstallReport, find7Zip, findArchiveInDownloads, executeSetupTask, SETUP_TASKS } from "@lexy/preinstall-setup";
-import { syncGuide, buildManifest, formatDiagnostics } from "@lexy/guide-parser";
+import { syncGuide, buildManifest, formatDiagnostics, diffManifests } from "@lexy/guide-parser";
 import { resolveManifest, NexusClient } from "@lexy/nexus-resolver";
 import { buildQueue, renderTask } from "@lexy/install-queue-engine";
 import { SessionStore } from "@lexy/session-store";
@@ -183,8 +183,54 @@ program
     const cacheDir = join(config.dataDir, "guide-cache");
     const outputPath = join(config.dataDir, "manifests", "manifest.json");
 
+    let oldManifest: any = null;
+    try {
+      const existing = await readFile(outputPath, "utf-8");
+      oldManifest = JSON.parse(existing);
+    } catch {
+      // First time running, no old manifest
+    }
+
     console.log("Building manifest...");
     const { manifest, diagnostics } = await buildManifest({ cacheDir, outputPath });
+
+    // Sync tasks into the default session DB
+    const dbPath = join(config.dataDir, "sessions", "session.db");
+    await mkdir(join(config.dataDir, "sessions"), { recursive: true });
+    const store = new SessionStore(dbPath);
+    
+    // Ensure session exists
+    if (!store.getSession("default")) {
+      store.createSession("default", "Default Session");
+    }
+
+    for (const task of manifest.tasks) {
+      store.upsertTask("default", task.id, task.orderIndex, task.modTitle);
+    }
+
+    console.log(`✅ Manifest built: ${manifest.tasks.length} tasks across ${manifest.pages.length} pages`);
+
+    // Diff against old manifest
+    if (oldManifest) {
+      console.log("\n🔄 Diffing against previous manifest state...");
+      const diff = diffManifests(oldManifest, manifest);
+      
+      console.log(`  🟢 Added:     ${diff.added.length}`);
+      console.log(`  🔴 Removed:   ${diff.removed.length}`);
+      console.log(`  🟡 Updated:   ${diff.updated.length}`);
+      console.log(`  🔵 Unchanged: ${diff.unchanged.length}`);
+
+      if (diff.updated.length > 0 || diff.removed.length > 0) {
+        // Reset updated tasks to todo
+        for (const update of diff.updated) {
+          const note = `[UPDATE] ${update.changes.join(" | ")}`;
+          // We apply this to the 'default' session for now
+          store.resetTaskToTodo("default", update.oldTask.id, note);
+        }
+      }
+    }
+
+    store.close();
 
     console.log(`✅ Manifest built: ${manifest.tasks.length} tasks across ${manifest.pages.length} pages`);
     
@@ -261,9 +307,20 @@ program
     const config = await loadConfig();
     const manifestPath = join(config.dataDir, "manifests", "manifest.json");
     const reportPath = join(config.dataDir, "validation-report.json");
+    const dbPath = join(config.dataDir, "sessions", "session.db");
 
     const manifest = JSON.parse(await readFile(manifestPath, "utf-8"));
     const validations = JSON.parse(await readFile(reportPath, "utf-8"));
+
+    const store = new SessionStore(dbPath);
+    const orphans = store.getOrphanedTasks("default", manifest.tasks.map((t: any) => t.id));
+    store.close();
+
+    if (orphans.length > 0) {
+      console.log(`\n🚨 WARNING: You have ${orphans.length} "done" task(s) that are NO LONGER in the guide!`);
+      console.log(`   You should manually uninstall these from MO2:`);
+      orphans.forEach((o: any) => console.log(`   - [${o.id}] ${o.modTitle}`));
+    }
 
     const queue = buildQueue(manifest.tasks, validations);
     console.log(`\n📋 Install Queue — ${queue.length} tasks\n`);
@@ -291,6 +348,14 @@ program
     // Ensure session exists
     if (!store.getSession(sessionId)) {
       store.createSession(sessionId, "Default Session");
+    }
+
+    const queueManifestPath = join(config.dataDir, "manifests", "manifest.json");
+    const queueManifest = JSON.parse(await readFile(queueManifestPath, "utf-8"));
+
+    const orphans = store.getOrphanedTasks(sessionId, queueManifest.tasks.map((t: any) => t.id));
+    if (orphans.length > 0) {
+      console.log(`\n🚨 WARNING: You have ${orphans.length} orphaned "done" task(s)! Run 'lexy queue' to view them.`);
     }
 
     const next = store.getNextTask(sessionId);

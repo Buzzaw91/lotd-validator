@@ -168,6 +168,49 @@ export class SessionStore {
     this.db.prepare("UPDATE tasks SET notes = ? WHERE id = ?").run(JSON.stringify(notes), taskId);
   }
 
+  // ── Guide Update State Diffing ─────────────────────────────────────
+
+  /**
+   * Forcibly resets a task to 'todo' state, bypassing standard transitions.
+   * Required when a guide update changes a completed task's version/files.
+   */
+  resetTaskToTodo(sessionId: string, taskId: string, reasonNote: string): void {
+    const current = this.getTaskStatus(taskId);
+    if (!current) return;
+
+    // Reset status to todo, clear completion time, but keep start time if it existed
+    this.db
+      .prepare(
+        `UPDATE tasks 
+         SET status = 'todo', completed_at = NULL 
+         WHERE id = ? AND session_id = ?`
+      )
+      .run(taskId, sessionId);
+
+    this.addNote(taskId, reasonNote);
+
+    this.logEvent(sessionId, taskId, "TASK_RESET_FOR_UPDATE", {
+      from: current,
+      to: "todo",
+      reason: reasonNote,
+    });
+  }
+
+  /**
+   * Finds tasks marked 'done' in the database that are no longer present in the guide.
+   */
+  getOrphanedTasks(sessionId: string, currentManifestTaskIds: string[]): Array<{ id: string; modTitle: string }> {
+    const allDoneTasks = this.db
+      .prepare(`SELECT id, mod_title FROM tasks WHERE session_id = ? AND status = 'done'`)
+      .all(sessionId) as Array<{ id: string; mod_title: string }>;
+
+    const validIdSet = new Set(currentManifestTaskIds);
+
+    return allDoneTasks
+      .filter((row) => !validIdSet.has(row.id))
+      .map((row) => ({ id: row.id, modTitle: row.mod_title }));
+  }
+
   // ── Event logging ──────────────────────────────────────────────────
 
   logEvent(sessionId: string, taskId: string | null, eventType: string, payload: unknown = {}): void {

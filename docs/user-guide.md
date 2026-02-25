@@ -137,8 +137,10 @@ The manifest contains every mod entry from the guide with:
 - **File entries** with category (Main, Update, Optional), filename, and version
 - **FOMOD instructions** — which options to select in FOMOD installers
 - **Special instructions** — post-install steps like file deletions or INI edits
-- **Tags** — badges like "SKSE DLL", "MO2 Removal Tool", etc.
 - **Nexus mod ID** — extracted from the download link
+
+> **✨ Guide Updates:** 
+> When you run `build-manifest`, the tool initiates a **State Diffing Engine**. It compares the new HTML against your existing manifest. If tasks were updated by Lexy (e.g. version bumped), it safely resets those specific tasks back to `todo` in your progress database and adds an `[UPDATE]` note explaining what changed. Your `done` progress on unchanged tasks is completely preserved.
 
 ### Step 3: Validate Against Nexus
 

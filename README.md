@@ -9,8 +9,9 @@ A companion tool for following [Lexy's Legacy of the Dragonborn](https://lexyslo
 4. **Downloads** files directly from Nexus Premium API to MO2, organized by guide section
 5. **Queues** tasks in install order with file categories, FOMOD instructions, and special steps
 6. **Tracks** your progress with a local SQLite session (mark-done, mark-blocked)
-7. **Reports** on validation confidence, mismatches, and archived files
-8. **Observes** your MO2 instance to detect which mods are already installed
+7. **Updates** smartly when the guide changes (State Diffing Engine) to preserve progress
+8. **Reports** on validation confidence, mismatches, and archived files
+9. **Observes** your MO2 instance to detect which mods are already installed
 
 ## Desktop GUI
 
