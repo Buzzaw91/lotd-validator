@@ -72,8 +72,40 @@ export default function App() {
     }
     window.addEventListener('resize', handleResize)
 
+    // Global Keyboard Shortcuts
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is explicitly typing in an input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+
+      if (e.shiftKey && e.key === 'ArrowRight') {
+        e.preventDefault()
+        if (window.electronAPI) {
+          setIsRunning(true)
+          term.scrollToBottom()
+          term.writeln(`\n\x1b[1;33m$ lexy next\x1b[0m\n`)
+          window.electronAPI.runCommand('lexy', ['next']).then(code => {
+            term.writeln(`\n\x1b[1;36mProcess exited with code ${code}\x1b[0m\n`)
+            setIsRunning(false)
+          })
+        }
+      } else if (e.shiftKey && e.key === 'ArrowLeft') {
+        e.preventDefault()
+        if (window.electronAPI) {
+          setIsRunning(true)
+          term.scrollToBottom()
+          term.writeln(`\n\x1b[1;33m$ lexy queue\x1b[0m\n`)
+          window.electronAPI.runCommand('lexy', ['queue']).then(code => {
+            term.writeln(`\n\x1b[1;36mProcess exited with code ${code}\x1b[0m\n`)
+            setIsRunning(false)
+          })
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+
     return () => {
       window.removeEventListener('resize', handleResize)
+      window.removeEventListener('keydown', handleKeyDown)
       if (window.electronAPI) window.electronAPI.removeAllListeners()
       term.dispose()
     }
