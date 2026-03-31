@@ -44,3 +44,11 @@ export {
 
 // ── Queue types ──────────────────────────────────────────────────────
 export { QueueTaskSchema, type QueueTask } from "./queue-types.js";
+
+// ── Override types ───────────────────────────────────────────────────
+export {
+  VersionOverrideSchema,
+  type VersionOverride,
+  VersionOverridesFileSchema,
+  type VersionOverridesFile,
+} from "./override-types.js";

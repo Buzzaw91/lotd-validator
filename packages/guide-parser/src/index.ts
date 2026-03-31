@@ -8,3 +8,4 @@ export {
   formatDiagnostics,
 } from "./diagnostics.js";
 export * from "./manifest-differ.js";
+export { applyOverrides, type AppliedOverride, type OverrideResult } from "./apply-overrides.js";

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import '@xterm/xterm/css/xterm.css'
-import { FileSearch, Download, Eye, TerminalSquare, Settings, Play } from 'lucide-react'
+import { FileSearch, Download, Eye, TerminalSquare, Settings, Play, Zap } from 'lucide-react'
 
 const TABS = [
   { id: 'validator', label: 'Validator', icon: FileSearch },
@@ -16,6 +16,7 @@ export default function App() {
   const [downloadSection, setDownloadSection] = useState('')
   const [sections, setSections] = useState<{ page: string; section: string; label: string }[]>([])
   const [isLoadingSections, setIsLoadingSections] = useState(false)
+  const [overrideCount, setOverrideCount] = useState(0)
   
   const terminalRef = useRef<HTMLDivElement>(null)
   const xtermRef = useRef<Terminal>(null)
@@ -109,6 +110,17 @@ export default function App() {
       if (window.electronAPI) window.electronAPI.removeAllListeners()
       term.dispose()
     }
+  }, [])
+
+  // Load override count on mount
+  useEffect(() => {
+    if (!window.electronAPI) return
+    window.electronAPI.captureCommand(['override', 'list', '--json']).then((raw: string) => {
+      try {
+        const arr = JSON.parse(raw)
+        if (Array.isArray(arr)) setOverrideCount(arr.length)
+      } catch {}
+    }).catch(() => {})
   }, [])
 
   const runCommand = async (cmd: string, args: string[]) => {
@@ -324,7 +336,17 @@ export default function App() {
             )
           })}
 
-          <div className="mt-auto pt-4 border-t border-[#313244]">
+          <div className="mt-auto pt-4 border-t border-[#313244] space-y-2">
+             {overrideCount > 0 && (
+               <button
+                 disabled={isRunning}
+                 onClick={() => runCommand('lexy', ['override', 'list'])}
+                 className="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors w-full text-left bg-amber-900/30 text-amber-300 hover:bg-amber-900/50 border border-amber-700/40 disabled:opacity-50 text-sm"
+               >
+                 <Zap size={16} />
+                 <span>{overrideCount} override{overrideCount !== 1 ? 's' : ''} active</span>
+               </button>
+             )}
              <button 
                 disabled={isRunning}
                 onClick={() => runCommand('lexy', ['queue'])}

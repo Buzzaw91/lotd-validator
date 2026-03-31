@@ -3,7 +3,8 @@
 import { Command } from "commander";
 import { loadConfig, initConfig, doctorConfig, CONFIG_PATH } from "./config.js";
 import { runPreinstallCheck, formatPreinstallReport, find7Zip, findArchiveInDownloads, executeSetupTask, SETUP_TASKS } from "@lexy/preinstall-setup";
-import { syncGuide, buildManifest, formatDiagnostics, diffManifests } from "@lexy/guide-parser";
+import { syncGuide, buildManifest, formatDiagnostics, diffManifests, applyOverrides } from "@lexy/guide-parser";
+import { VersionOverridesFileSchema } from "@lexy/core-types";
 import { resolveManifest, NexusClient } from "@lexy/nexus-resolver";
 import { buildQueue, renderTask } from "@lexy/install-queue-engine";
 import { SessionStore } from "@lexy/session-store";
@@ -194,6 +195,20 @@ program
     console.log("Building manifest...");
     const { manifest, diagnostics } = await buildManifest({ cacheDir, outputPath });
 
+    // Apply version overrides
+    const overridesPath = join(config.dataDir, "overrides.json");
+    let overridesRaw: any[] = [];
+    try {
+      overridesRaw = VersionOverridesFileSchema.parse(JSON.parse(await readFile(overridesPath, "utf-8")));
+    } catch {}
+    if (overridesRaw.length > 0) {
+      const { tasks: patchedTasks, applied } = applyOverrides(manifest.tasks, overridesRaw);
+      manifest.tasks = patchedTasks;
+      for (const a of applied) {
+        console.log(`⚡ OVERRIDE: "${a.modTitle}" → pinned to v${a.newVersion}${a.reason ? ` (${a.reason})` : ""}`);
+      }
+    }
+
     // Sync tasks into the default session DB
     const dbPath = join(config.dataDir, "sessions", "session.db");
     await mkdir(join(config.dataDir, "sessions"), { recursive: true });
@@ -322,6 +337,16 @@ program
       orphans.forEach((o: any) => console.log(`   - [${o.id}] ${o.modTitle}`));
     }
 
+    // Override warning
+    const overridesPath = join(config.dataDir, "overrides.json");
+    let overrideCount = 0;
+    try {
+      overrideCount = JSON.parse(await readFile(overridesPath, "utf-8")).length;
+    } catch {}
+    if (overrideCount > 0) {
+      console.log(`\n⚡ ${overrideCount} version override(s) active. Run 'lexy override list' to review.`);
+    }
+
     const queue = buildQueue(manifest.tasks, validations);
     console.log(`\n📋 Install Queue — ${queue.length} tasks\n`);
 
@@ -356,6 +381,16 @@ program
     const orphans = store.getOrphanedTasks(sessionId, queueManifest.tasks.map((t: any) => t.id));
     if (orphans.length > 0) {
       console.log(`\n🚨 WARNING: You have ${orphans.length} orphaned "done" task(s)! Run 'lexy queue' to view them.`);
+    }
+
+    // Override warning
+    const overridesPath = join(config.dataDir, "overrides.json");
+    let overrideCount = 0;
+    try {
+      overrideCount = JSON.parse(await readFile(overridesPath, "utf-8")).length;
+    } catch {}
+    if (overrideCount > 0) {
+      console.log(`⚡ ${overrideCount} version override(s) active. Run 'lexy override list' to review.`);
     }
 
     const next = store.getNextTask(sessionId);
@@ -663,6 +698,102 @@ program
 
     spinner.stop();
     console.log(formatDownloadResult(result, plan));
+  });
+
+// ── override ────────────────────────────────────────────────────────
+
+const overrideCmd = program
+  .command("override")
+  .description("Manage version overrides for specific mods");
+
+overrideCmd
+  .command("add")
+  .description("Pin a mod to a specific version")
+  .argument("<modTitle>", "Mod title (case-insensitive substring match)")
+  .argument("<version>", "Version to pin")
+  .option("--reason <reason>", "Reason for the override")
+  .action(async (modTitle: string, version: string, opts: any) => {
+    const config = await loadConfig();
+    const overridesPath = join(config.dataDir, "overrides.json");
+
+    let overrides: any[] = [];
+    try {
+      overrides = JSON.parse(await readFile(overridesPath, "utf-8"));
+    } catch {}
+
+    // Remove existing override for the same mod title (case-insensitive)
+    overrides = overrides.filter(
+      (o: any) => o.modTitle.toLowerCase() !== modTitle.toLowerCase(),
+    );
+
+    overrides.push({
+      modTitle,
+      expectedVersion: version,
+      reason: opts.reason ?? undefined,
+    });
+
+    await writeFile(overridesPath, JSON.stringify(overrides, null, 2), "utf-8");
+    console.log(`⚡ Override added: "${modTitle}" → v${version}`);
+    console.log(`   Run 'lexy build-manifest' to apply.`);
+  });
+
+overrideCmd
+  .command("list")
+  .description("List all active version overrides")
+  .option("--json", "Output as JSON")
+  .action(async (opts: any) => {
+    const config = await loadConfig();
+    const overridesPath = join(config.dataDir, "overrides.json");
+
+    let overrides: any[] = [];
+    try {
+      overrides = JSON.parse(await readFile(overridesPath, "utf-8"));
+    } catch {}
+
+    if (opts.json) {
+      console.log(JSON.stringify(overrides, null, 2));
+      return;
+    }
+
+    if (overrides.length === 0) {
+      console.log("No version overrides configured.");
+      return;
+    }
+
+    console.log(`\n⚡ ${overrides.length} Version Override(s)\n`);
+    for (const o of overrides) {
+      console.log(`  📌 "${o.modTitle}" → v${o.expectedVersion}`);
+      if (o.reason) console.log(`     Reason: ${o.reason}`);
+    }
+    console.log();
+  });
+
+overrideCmd
+  .command("remove")
+  .description("Remove a version override")
+  .argument("<modTitle>", "Mod title to remove override for")
+  .action(async (modTitle: string) => {
+    const config = await loadConfig();
+    const overridesPath = join(config.dataDir, "overrides.json");
+
+    let overrides: any[] = [];
+    try {
+      overrides = JSON.parse(await readFile(overridesPath, "utf-8"));
+    } catch {}
+
+    const before = overrides.length;
+    overrides = overrides.filter(
+      (o: any) => !o.modTitle.toLowerCase().includes(modTitle.toLowerCase()),
+    );
+    const removed = before - overrides.length;
+
+    await writeFile(overridesPath, JSON.stringify(overrides, null, 2), "utf-8");
+
+    if (removed > 0) {
+      console.log(`✅ Removed ${removed} override(s) matching "${modTitle}"`);
+    } else {
+      console.log(`⚠️  No overrides found matching "${modTitle}"`);
+    }
   });
 
 program.parse();
