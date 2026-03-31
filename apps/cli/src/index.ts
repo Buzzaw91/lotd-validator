@@ -9,7 +9,7 @@ import { resolveManifest, NexusClient } from "@lexy/nexus-resolver";
 import { buildQueue, renderTask } from "@lexy/install-queue-engine";
 import { SessionStore } from "@lexy/session-store";
 import { createSnapshot, formatSnapshot, listProfiles } from "@lexy/mo2-observer";
-import { listSections, buildDownloadPlan, buildPageDownloadPlan, executeDownloads, formatDownloadResult } from "@lexy/mod-downloader";
+import { listSections, buildDownloadPlan, buildPageDownloadPlan, resolveDownloadPlan, executeDownloads, formatDownloadResult } from "@lexy/mod-downloader";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
@@ -529,7 +529,7 @@ program
   .command("observe")
   .description("Read MO2 state and compare against the guide manifest")
   .option("--mo2-path <path>", "Path to MO2 portable instance")
-  .option("--profile <name>", "MO2 profile name", "Default")
+  .option("--profile <name>", "MO2 profile name (auto-detects if omitted)")
   .option("--json", "Output raw JSON instead of formatted text")
   .action(async (opts) => {
     const config = await loadConfig();
@@ -542,14 +542,22 @@ program
       process.exit(1);
     }
 
-    // Check that profile exists
+    // Check that profile exists (auto-detect if not specified)
     const profiles = await listProfiles(mo2Path);
     if (profiles.length === 0) {
       console.error(`❌ No profiles found in ${mo2Path}/profiles/`);
       process.exit(1);
     }
-    if (!profiles.includes(opts.profile)) {
-      console.error(`❌ Profile "${opts.profile}" not found. Available: ${profiles.join(", ")}`);
+
+    let profile = opts.profile;
+    if (!profile) {
+      // Auto-detect: prefer first non-"Vanilla" profile, fallback to first
+      profile = profiles.find((p: string) => !p.toLowerCase().includes("vanilla")) ?? profiles[0];
+      console.log(`📂 Auto-detected MO2 profile: "${profile}"`);
+    }
+
+    if (!profiles.includes(profile)) {
+      console.error(`❌ Profile "${profile}" not found. Available: ${profiles.join(", ")}`);
       process.exit(1);
     }
 
@@ -564,7 +572,7 @@ program
     }
 
     console.log("Scanning MO2 instance...");
-    const snapshot = await createSnapshot(mo2Path, opts.profile, manifest);
+    const snapshot = await createSnapshot(mo2Path, profile, manifest);
 
     if (opts.json) {
       console.log(JSON.stringify(snapshot, null, 2));
@@ -618,8 +626,8 @@ program
     try {
       validations = JSON.parse(await readFile(reportPath, "utf-8"));
     } catch {
-      console.error("❌ Validation report not found. Run `lexy validate` first.");
-      process.exit(1);
+      console.log("⚠️  No validation report found. Using manifest data only (run 'lexy validate' for better file matching).");
+      validations = [];
     }
 
     let plan;
@@ -659,8 +667,24 @@ program
       process.exit(1);
     }
 
+    // Resolve missing file IDs via Nexus API
+    if (plan.skippedNoFileId > 0) {
+      console.log(`\n🔍 Resolving ${plan.skippedNoFileId} missing file ID(s) via Nexus API...`);
+      plan = await resolveDownloadPlan(plan, manifest, {
+        apiKey: config.nexusApiKey,
+        cacheDir: join(config.dataDir, "nexus-cache"),
+        onProgress: (current, total, modTitle) => {
+          process.stdout.write(`\r  [${current}/${total}] ${modTitle}`);
+        },
+      });
+      console.log(""); // newline after progress
+    }
+
     if (plan.targets.length === 0) {
       console.log("No downloadable files found for this selection.");
+      if (plan.skippedNoFileId > 0) {
+        console.log(`  (${plan.skippedNoFileId} file(s) could not be matched on Nexus)`);
+      }
       return;
     }
 

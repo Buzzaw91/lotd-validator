@@ -142,14 +142,38 @@ export function matchFile(
 
 // ── String normalization helpers ─────────────────────────────────────
 
+/**
+ * Strip the Nexus download suffix from a filename.
+ * Nexus format: `HumanName-ModID-VersionDashes-Timestamp.ext`
+ * e.g. `Project Clarity AIO Half Res Loose-45306-3-2-1657382745.7z`
+ *   → `Project Clarity AIO Half Res Loose`
+ */
+function stripNexusSuffix(name: string): string {
+  // Remove file extension first
+  const noExt = name.replace(/\.[^.]+$/, "");
+  // Strip trailing -ModID-Version-Timestamp pattern (all digits and dashes)
+  return noExt.replace(/-\d[\d-]*$/, "");
+}
+
 function normalizeFilename(name: string): string {
-  return name.toLowerCase().replace(/[\s_-]+/g, "").replace(/\.[^.]+$/, "");
+  return stripNexusSuffix(name)
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "");
 }
 
 function normalizeVersion(version: string): string {
   return version.toLowerCase().replace(/^v/, "").trim();
 }
 
-function fuzzyFilenameMatch(a: string, b: string): boolean {
-  return normalizeFilename(a) === normalizeFilename(b);
+function fuzzyFilenameMatch(nexusName: string, guideName: string): boolean {
+  const normNexus = normalizeFilename(nexusName);
+  const normGuide = normalizeFilename(guideName);
+
+  // Exact match after normalization
+  if (normNexus === normGuide) return true;
+
+  // Containment: guide name is a prefix/substring of the Nexus name
+  if (normNexus.startsWith(normGuide) || normGuide.startsWith(normNexus)) return true;
+
+  return false;
 }

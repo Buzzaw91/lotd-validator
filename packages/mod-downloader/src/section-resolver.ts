@@ -1,5 +1,7 @@
 import { createLogger } from "@lexy/logger";
 import type { InstallTask, GuideManifest, ValidationRecord } from "@lexy/core-types";
+import { NexusClient, MetadataCache, matchFile } from "@lexy/nexus-resolver";
+import type { NexusFilesResponse } from "@lexy/nexus-resolver";
 
 const log = createLogger("section-resolver");
 
@@ -108,11 +110,14 @@ export function buildDownloadPlan(
         continue;
       }
 
-      if (!validation?.matchedFileId) {
+      // Use matched fileId from validation, or fall back to manifest's nexusFileId
+      const fileId = validation?.matchedFileId ?? entry.nexusFileId;
+
+      if (!fileId) {
         skippedNoFileId++;
         log.debug(
           { taskId: task.id, fileIndex: i, modTitle: task.modTitle },
-          "no matched fileId in validation report",
+          "no fileId available (run 'lexy validate' to resolve)",
         );
         continue;
       }
@@ -124,11 +129,11 @@ export function buildDownloadPlan(
         pageSlug: task.pageSlug,
         fileEntryIndex: i,
         nexusModId: entry.nexusModId,
-        fileId: validation.matchedFileId,
+        fileId,
         expectedFileName: entry.expectedFileName,
         expectedVersion: entry.expectedVersion,
-        matchedFileName: validation.matchedFileName,
-        confidence: validation.confidence,
+        matchedFileName: validation?.matchedFileName,
+        confidence: validation?.confidence ?? 0,
       });
     }
   }
@@ -147,6 +152,7 @@ export function buildDownloadPlan(
 
   return { sectionTitle, pageSlug: resolvedPage, targets, skippedManual, skippedNoFileId };
 }
+
 
 /**
  * Build a download plan for an entire page (all sections).
@@ -176,4 +182,102 @@ export function buildPageDownloadPlan(
   }
 
   return merged;
+}
+
+// ── On-the-fly file ID resolution ───────────────────────────────────
+
+export interface ResolveOptions {
+  apiKey: string;
+  cacheDir: string;
+  onProgress?: (current: number, total: number, modTitle: string) => void;
+}
+
+/**
+ * Resolve missing file IDs in a download plan by querying the Nexus API.
+ * 
+ * This fixes tasks that are skipped due to `skippedNoFileId` by looking up
+ * the mod's files on Nexus and matching by expectedFileName + expectedVersion.
+ */
+export async function resolveDownloadPlan(
+  plan: DownloadPlan,
+  manifest: GuideManifest,
+  options: ResolveOptions,
+): Promise<DownloadPlan> {
+  // Find tasks that were skipped (in the section but not in targets)
+  const tasksInSection = manifest.tasks.filter((t) => {
+    if (t.sectionTitle !== plan.sectionTitle) return false;
+    if (plan.pageSlug && plan.pageSlug !== `All sections on ${t.pageSlug}` && t.pageSlug !== plan.pageSlug) return false;
+    return true;
+  });
+
+  // Find file entries that are missing from the plan
+  const existingKeys = new Set(plan.targets.map((t) => `${t.taskId}:${t.fileEntryIndex}`));
+  const missing: Array<{ task: InstallTask; fileIndex: number }> = [];
+
+  for (const task of tasksInSection) {
+    for (let i = 0; i < task.fileEntries.length; i++) {
+      const entry = task.fileEntries[i]!;
+      if (!entry.nexusModId) continue; // Skip manual entries
+      if (existingKeys.has(`${task.id}:${i}`)) continue; // Already resolved
+      missing.push({ task, fileIndex: i });
+    }
+  }
+
+  if (missing.length === 0) return plan;
+
+  log.info({ missingCount: missing.length }, "resolving missing file IDs via Nexus API");
+
+  const client = new NexusClient({ apiKey: options.apiKey });
+  const cache = new MetadataCache(options.cacheDir);
+  const newTargets: DownloadTarget[] = [];
+  let resolved = 0;
+
+  for (const { task, fileIndex } of missing) {
+    const entry = task.fileEntries[fileIndex]!;
+
+    try {
+      const cacheKey = `mod-files-${entry.nexusModId}`;
+      let filesResponse = await cache.get<NexusFilesResponse>(cacheKey);
+      if (!filesResponse) {
+        filesResponse = await client.getModFiles(entry.nexusModId!);
+        await cache.set(cacheKey, filesResponse);
+      }
+
+      const result = matchFile(entry, filesResponse.files);
+
+      if (result.matchedFile) {
+        newTargets.push({
+          taskId: task.id,
+          modTitle: task.modTitle,
+          sectionTitle: task.sectionTitle,
+          pageSlug: task.pageSlug,
+          fileEntryIndex: fileIndex,
+          nexusModId: entry.nexusModId!,
+          fileId: result.matchedFile.file_id,
+          expectedFileName: entry.expectedFileName,
+          expectedVersion: entry.expectedVersion,
+          matchedFileName: result.matchedFile.file_name,
+          confidence: result.confidence,
+        });
+        resolved++;
+      } else {
+        log.warn(
+          { taskId: task.id, modTitle: task.modTitle, expectedFileName: entry.expectedFileName },
+          "could not resolve file on Nexus",
+        );
+      }
+
+      options.onProgress?.(resolved, missing.length, task.modTitle);
+    } catch (err) {
+      log.error({ taskId: task.id, err }, "Nexus API lookup failed");
+    }
+  }
+
+  log.info({ resolved, total: missing.length }, "file ID resolution complete");
+
+  return {
+    ...plan,
+    targets: [...plan.targets, ...newTargets],
+    skippedNoFileId: plan.skippedNoFileId - resolved,
+  };
 }

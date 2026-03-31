@@ -174,9 +174,23 @@ export function matchModsToTasks(
   }
 
   // Build unmatched lists
+  const VANILLA_PREFIXES = ['DLC:', 'Creation Club:', 'cc'];
+  const KNOWN_GUIDE_MODS = [
+    'cleaned vanilla esms',
+    'bashed patch',
+    'unmanaged: bashed patch',
+    'smashed patch',
+    'unmanaged: smashed patch',
+    'overwrite',
+  ];
   const unmatchedMods = installedMods
     .filter((m) => !m.entry.isSeparator && !matchedModNames.has(m.entry.name))
-    .map((m) => m.entry.name);
+    .map((m) => m.entry.name)
+    .filter((name) => {
+      if (VANILLA_PREFIXES.some((p) => name.startsWith(p))) return false;
+      if (KNOWN_GUIDE_MODS.some((k) => name.toLowerCase().includes(k))) return false;
+      return true;
+    });
 
   const missingTasks: MissingTask[] = manifest.tasks
     .filter((t) => !matchedTaskIds.has(t.id))
@@ -281,5 +295,17 @@ function getExpectedVersion(task: InstallTask): string | undefined {
 function versionsMatch(installed: string, expected: string): boolean {
   // Normalize versions: strip leading "v", trim whitespace
   const norm = (v: string) => v.replace(/^v/i, "").trim();
-  return norm(installed) === norm(expected);
+  const a = norm(installed);
+  const b = norm(expected);
+
+  // Exact match
+  if (a === b) return true;
+
+  // SKSE-style date versions (dYYYY.M.DD.N) should not flag a mismatch
+  // against short semver versions — the user just renamed the archive
+  if (/^d\d{4}\.\d+\.\d+/.test(a) || /^d\d{4}\.\d+\.\d+/.test(b)) {
+    return true;
+  }
+
+  return false;
 }
