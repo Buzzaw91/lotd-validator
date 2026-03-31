@@ -123,6 +123,28 @@ export function matchFile(
     }
 
     if (nameCandidates.length > 1) {
+      // Try to disambiguate by category: prefer MAIN, or match entry's category
+      const preferredCat = entry.fileCategory ?? "MAIN";
+      const catMatch = nameCandidates.find(
+        (f) => f.category_name?.toUpperCase() === preferredCat.toUpperCase(),
+      );
+
+      if (catMatch) {
+        const versionMismatch =
+          entry.expectedVersion &&
+          normalizeVersion(catMatch.version) !== normalizeVersion(entry.expectedVersion);
+
+        return {
+          status: versionMismatch ? "ARCHIVED_REQUIRED" : "PARTIAL",
+          confidence: versionMismatch ? 0.5 : 0.7,
+          matchedFile: catMatch,
+          notes: [
+            `Multiple filename candidates — picked ${catMatch.category_name} category file`,
+            ...(versionMismatch ? [`Version mismatch: expected ${entry.expectedVersion}, found ${catMatch.version}`] : []),
+          ],
+        };
+      }
+
       notes.push(`Multiple filename candidates found: ${nameCandidates.map((f) => f.file_name).join(", ")}`);
       return {
         status: "MANUAL",

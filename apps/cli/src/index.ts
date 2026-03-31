@@ -318,7 +318,10 @@ program
 program
   .command("queue")
   .description("Show the install queue summary")
-  .action(async () => {
+  .option("--section <name>", "Show only tasks in this section")
+  .option("--page <slug>", "Show only tasks on this page")
+  .option("--list-sections", "List available sections with task counts")
+  .action(async (opts) => {
     const config = await loadConfig();
     const manifestPath = join(config.dataDir, "manifests", "manifest.json");
     const reportPath = join(config.dataDir, "validation-report.json");
@@ -347,8 +350,47 @@ program
       console.log(`\n⚡ ${overrideCount} version override(s) active. Run 'lexy override list' to review.`);
     }
 
-    const queue = buildQueue(manifest.tasks, validations);
-    console.log(`\n📋 Install Queue — ${queue.length} tasks\n`);
+    // List sections mode
+    if (opts.listSections) {
+      const sections = new Map<string, { page: string; count: number }>();
+      for (const task of manifest.tasks) {
+        const key = `${task.pageSlug}|${task.sectionTitle}`;
+        const existing = sections.get(key);
+        if (existing) {
+          existing.count++;
+        } else {
+          sections.set(key, { page: task.pageSlug, count: 1 });
+        }
+      }
+      console.log(`\n📋 Sections (${sections.size} total)\n`);
+      for (const [key, info] of sections) {
+        const sectionName = key.split("|")[1];
+        console.log(`  ${info.page} > ${sectionName} (${info.count} tasks)`);
+      }
+      return;
+    }
+
+    let queue = buildQueue(manifest.tasks, validations);
+
+    // Apply filters
+    if (opts.section) {
+      const sectionLower = opts.section.toLowerCase();
+      queue = queue.filter((t: any) => t.sectionTitle.toLowerCase().includes(sectionLower));
+    }
+    if (opts.page) {
+      queue = queue.filter((t: any) => t.pageSlug === opts.page);
+    }
+
+    const filterLabel = opts.section ? ` — "${opts.section}"` : opts.page ? ` — ${opts.page}` : "";
+    console.log(`\n📋 Install Queue — ${queue.length} tasks${filterLabel}\n`);
+
+    if (queue.length === 0) {
+      console.log("  No tasks found for this filter.");
+      if (!opts.section && !opts.page) {
+        console.log("  Use --list-sections to see available sections.");
+      }
+      return;
+    }
 
     for (let i = 0; i < queue.length; i++) {
       console.log(renderTask(queue[i]!, i));
@@ -711,10 +753,13 @@ program
 
     console.log(`\n📥 Downloading ${plan.targets.length} file(s) to ${downloadsDir}\n`);
 
+    const cacheDir = join(config.dataDir, "nexus-cache");
     const result = await executeDownloads(plan, {
       downloadsDir,
       client,
       skipExisting: !!opts.skipExisting,
+      manifest,
+      cacheDir,
       onProgress: (event) => {
         const pct = `[${event.current}/${event.total}]`;
         const name = event.target.expectedFileName ?? event.target.matchedFileName ?? event.target.modTitle;

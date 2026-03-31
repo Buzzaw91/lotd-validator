@@ -246,6 +246,19 @@ function extractFileEntries(
       version = versionEl.text().replace(labelText, "").trim() || undefined;
     }
 
+    // Fallback: extract version from mod-level shields.io badge if per-file version is missing
+    if (!version) {
+      const versionBadge = $mod.find('div.mod-subheading img[src*="Version-"]').first().attr("src");
+      if (versionBadge) {
+        // Badge URL format: https://img.shields.io/badge/Version-1.1.1-informational.svg
+        const badgeMatch = versionBadge.match(/Version-(.+)-informational/);
+        if (badgeMatch) {
+          // shields.io uses %20 for spaces, decode it
+          version = decodeURIComponent(badgeMatch[1].replace(/%20/g, " ")).trim() || undefined;
+        }
+      }
+    }
+
     // Nexus source URL from the parent mod's download link
     const sourceUrl = $mod.find('div.mod-subheading a[href*="nexusmods.com"]').first().attr("href") ?? undefined;
 

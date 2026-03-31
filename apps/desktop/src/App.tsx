@@ -216,78 +216,111 @@ export default function App() {
     setIsLoadingSections(false)
   }
 
-  const renderDownloader = () => (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold mb-4 text-green-300">Automated Downloading</h2>
-      <p className="text-gray-400 text-sm">Download validated files directly from the Nexus Premium CDN to your MO2 downloads folder.</p>
-      
-      <div className="mt-4 space-y-3">
-        {/* Load sections button */}
+  const renderDownloader = () => {
+    const currentIdx = sections.findIndex(s => s.section === downloadSection)
+    const canPrev = currentIdx > 0
+    const canNext = currentIdx < sections.length - 1 && currentIdx >= 0
+
+    const goSection = (delta: number) => {
+      const newIdx = currentIdx + delta
+      if (newIdx >= 0 && newIdx < sections.length) {
+        setDownloadSection(sections[newIdx].section)
+      }
+    }
+
+    return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-green-300">Downloader</h2>
         <button 
           disabled={isRunning || isLoadingSections}
           onClick={loadSections}
-          className="flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 text-gray-200 px-4 py-2 rounded-lg border border-gray-600 transition-colors disabled:opacity-50 text-sm"
+          className="flex items-center space-x-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded border border-gray-600 transition-colors disabled:opacity-50 text-xs"
         >
-          <Settings size={16} />
-          <span>{isLoadingSections ? 'Loading...' : sections.length > 0 ? `Reload Sections (${sections.length})` : 'Load Sections'}</span>
+          <Settings size={14} />
+          <span>{isLoadingSections ? 'Loading...' : sections.length > 0 ? `Reload (${sections.length})` : 'Load Sections'}</span>
         </button>
+      </div>
 
-        {/* Scrollable section list */}
-        {sections.length > 0 && (
-          <div className="max-h-48 overflow-y-auto bg-[#181825] border border-[#313244] rounded-lg p-2 space-y-0.5">
+      {/* Section selector with prev/next */}
+      {sections.length > 0 && (
+        <div className="flex items-center gap-2">
+          <button
+            disabled={!canPrev || isRunning}
+            onClick={() => goSection(-1)}
+            className="p-2 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-600 disabled:opacity-30 transition-colors shrink-0"
+            title="Previous section"
+          >
+            ◀
+          </button>
+          <select
+            value={downloadSection}
+            onChange={(e) => setDownloadSection(e.target.value)}
+            className="flex-1 bg-[#181825] border border-[#313244] rounded px-3 py-2 text-sm text-gray-200 focus:border-green-600 focus:outline-none min-w-0"
+          >
             {sections.map((s, i) => (
-              <label 
-                key={i}
-                className={`flex items-center space-x-2 px-3 py-1.5 rounded cursor-pointer text-sm transition-colors ${
-                  downloadSection === s.section 
-                    ? 'bg-green-900/40 text-green-200' 
-                    : 'text-gray-400 hover:bg-[#313244]/50 hover:text-gray-200'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="section"
-                  checked={downloadSection === s.section}
-                  onChange={() => setDownloadSection(s.section)}
-                  className="accent-green-500"
-                />
-                <span className="text-gray-500 text-xs w-40 shrink-0 truncate">{s.page}</span>
-                <span className="truncate">{s.label}</span>
-              </label>
+              <option key={i} value={s.section}>
+                {s.label}
+              </option>
             ))}
-          </div>
-        )}
-
-        {/* Action buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
-          <button 
-            disabled={isRunning || !downloadSection.trim()}
-            onClick={() => runCommand('lexy', ['download', '--section', downloadSection.trim(), '--dry-run'])}
-            className="flex items-center justify-center space-x-2 bg-gray-800 hover:bg-gray-700 text-gray-200 p-3 rounded-lg border border-gray-600 transition-colors disabled:opacity-50"
+          </select>
+          <button
+            disabled={!canNext || isRunning}
+            onClick={() => goSection(1)}
+            className="p-2 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-600 disabled:opacity-30 transition-colors shrink-0"
+            title="Next section"
           >
-            <Eye size={18} />
-            <span>Preview</span>
-          </button>
-          <button 
-            disabled={isRunning || !downloadSection.trim()}
-            onClick={() => runCommand('lexy', ['download', '--section', downloadSection.trim(), '--skip-existing'])}
-            className="flex items-center justify-center space-x-2 bg-green-900/50 hover:bg-green-800 text-green-200 p-3 rounded-lg border border-green-700/50 transition-colors disabled:opacity-50"
-          >
-            <Download size={18} />
-            <span>Download</span>
-          </button>
-          <button 
-            disabled={isRunning}
-            onClick={() => runCommand('lexy', ['download', '--next', '--dry-run'])}
-            className="flex items-center justify-center space-x-2 bg-blue-900/50 hover:bg-blue-800 text-blue-200 p-3 rounded-lg border border-blue-700/50 transition-colors disabled:opacity-50"
-          >
-            <Play size={18} />
-            <span>Next Pending</span>
+            ▶
           </button>
         </div>
+      )}
+
+      {/* Section info */}
+      {sections.length > 0 && currentIdx >= 0 && (
+        <div className="text-xs text-gray-500">
+          Section {currentIdx + 1} of {sections.length} · {sections[currentIdx]?.page}
+        </div>
+      )}
+
+      {/* Action buttons — 2×2 grid for compact layout */}
+      <div className="grid grid-cols-2 gap-2">
+        <button 
+          disabled={isRunning || !downloadSection.trim()}
+          onClick={() => runCommand('lexy', ['queue', '--section', downloadSection.trim()])}
+          className="flex items-center justify-center space-x-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 p-2.5 rounded-lg border border-gray-600 transition-colors disabled:opacity-50 text-sm"
+          title="Show install instructions for this section"
+        >
+          <TerminalSquare size={16} />
+          <span>Instructions</span>
+        </button>
+        <button 
+          disabled={isRunning || !downloadSection.trim()}
+          onClick={() => runCommand('lexy', ['download', '--section', downloadSection.trim(), '--dry-run'])}
+          className="flex items-center justify-center space-x-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 p-2.5 rounded-lg border border-gray-600 transition-colors disabled:opacity-50 text-sm"
+        >
+          <Eye size={16} />
+          <span>Preview</span>
+        </button>
+        <button 
+          disabled={isRunning || !downloadSection.trim()}
+          onClick={() => runCommand('lexy', ['download', '--section', downloadSection.trim(), '--skip-existing'])}
+          className="flex items-center justify-center space-x-1.5 bg-green-900/50 hover:bg-green-800 text-green-200 p-2.5 rounded-lg border border-green-700/50 transition-colors disabled:opacity-50 text-sm"
+        >
+          <Download size={16} />
+          <span>Download</span>
+        </button>
+        <button 
+          disabled={isRunning}
+          onClick={() => runCommand('lexy', ['observe'])}
+          className="flex items-center justify-center space-x-1.5 bg-amber-900/40 hover:bg-amber-800 text-amber-200 p-2.5 rounded-lg border border-amber-700/50 transition-colors disabled:opacity-50 text-sm"
+        >
+          <Eye size={16} />
+          <span>MO2 Inspect</span>
+        </button>
       </div>
     </div>
-  )
+    )
+  }
 
   const renderObserver = () => (
     <div className="space-y-4">
@@ -362,7 +395,7 @@ export default function App() {
         <div className="flex-1 flex flex-col bg-[#1e1e2e]">
           
           {/* Top Panel: Control Views */}
-          <div className="p-8 h-1/2 overflow-y-auto">
+          <div className="p-4 h-1/2 overflow-y-auto">
             {activeTab === 'validator' && renderValidator()}
             {activeTab === 'downloader' && renderDownloader()}
             {activeTab === 'observer' && renderObserver()}

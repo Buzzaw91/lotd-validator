@@ -5,8 +5,10 @@ import { join, basename } from "node:path";
 import { pipeline } from "node:stream/promises";
 import { Transform } from "node:stream";
 import { createLogger } from "@lexy/logger";
-import { NexusClient } from "@lexy/nexus-resolver";
+import { NexusClient, MetadataCache, matchFile } from "@lexy/nexus-resolver";
+import type { NexusFilesResponse } from "@lexy/nexus-resolver";
 import type { DownloadTarget, DownloadPlan } from "./section-resolver";
+import type { GuideManifest, GuideFileEntry } from "@lexy/core-types";
 
 const log = createLogger("downloader");
 
@@ -21,6 +23,10 @@ export interface DownloadOptions {
   skipExisting: boolean;
   /** Progress callback */
   onProgress?: (event: DownloadProgressEvent) => void;
+  /** Guide manifest — needed for 404 retry resolution */
+  manifest?: GuideManifest;
+  /** Nexus cache directory — needed for 404 retry resolution */
+  cacheDir?: string;
 }
 
 export interface DownloadProgressEvent {
@@ -117,6 +123,40 @@ export async function executeDownloads(
       });
     } catch (err) {
       const errorMsg = (err as Error).message;
+
+      // If 404 and we have manifest context, try re-resolving the file ID
+      if (errorMsg.includes('404') && options.manifest && options.cacheDir) {
+        log.info({ modTitle: target.modTitle }, "404 — attempting fresh file ID resolution");
+        onProgress?.({
+          target: { ...target },
+          status: "downloading",
+          current: i + 1,
+          total,
+        });
+
+        const resolved = await tryResolveAndRetry(target, options, downloadsDir, (bytesDownloaded, bytesTotal) => {
+          onProgress?.({
+            target,
+            status: "downloading",
+            current: i + 1,
+            total,
+            bytesDownloaded,
+            bytesTotal,
+          });
+        });
+
+        if (resolved) {
+          result.completed.push(target);
+          onProgress?.({
+            target,
+            status: "complete",
+            current: i + 1,
+            total,
+          });
+          continue;
+        }
+      }
+
       log.error({ target: target.taskId, modTitle: target.modTitle, error: errorMsg }, "download failed");
       result.failed.push({ target, error: errorMsg });
 
@@ -219,6 +259,62 @@ async function downloadSingleFile(
 
   await writeFile(`${filePath}.meta`, metaContent, "utf-8");
   log.debug({ metaPath: `${filePath}.meta` }, "wrote .meta sidecar");
+}
+
+// ── 404 auto-retry with fresh resolution ────────────────────────────
+
+/**
+ * When a download returns 404 (stale file ID), re-resolve the file by
+ * fetching the mod's current file list and matching fresh.
+ */
+async function tryResolveAndRetry(
+  target: DownloadTarget,
+  options: DownloadOptions,
+  downloadsDir: string,
+  onByteProgress?: (bytesDownloaded: number, bytesTotal: number) => void,
+): Promise<boolean> {
+  if (!options.manifest || !options.cacheDir) return false;
+
+  try {
+    // Find the original file entry from the manifest
+    const task = options.manifest.tasks.find((t) => t.id === target.taskId);
+    if (!task) return false;
+    const entry = task.fileEntries[target.fileEntryIndex];
+    if (!entry || !entry.nexusModId) return false;
+
+    // Force-refresh the file listing (bypass cache)
+    const filesResponse = await options.client.getModFiles(entry.nexusModId);
+    const cache = new MetadataCache(options.cacheDir);
+    await cache.set(`mod-files-${entry.nexusModId}`, filesResponse);
+
+    const result = matchFile(entry, filesResponse.files);
+    if (!result.matchedFile) {
+      log.warn({ modTitle: target.modTitle }, "re-resolution found no match");
+      return false;
+    }
+
+    // Update the target with the fresh file ID
+    const newFileId = result.matchedFile.file_id;
+    if (newFileId === target.fileId) {
+      log.warn({ modTitle: target.modTitle, fileId: newFileId }, "re-resolved same file ID — still stale");
+      return false;
+    }
+
+    log.info(
+      { modTitle: target.modTitle, oldFileId: target.fileId, newFileId, matchedName: result.matchedFile.file_name },
+      "re-resolved to new file ID",
+    );
+
+    // Mutate the target with the new ID and retry
+    target.fileId = newFileId;
+    target.matchedFileName = result.matchedFile.file_name;
+
+    await downloadSingleFile(target, options.client, downloadsDir, onByteProgress);
+    return true;
+  } catch (retryErr) {
+    log.error({ modTitle: target.modTitle, error: (retryErr as Error).message }, "retry after re-resolution failed");
+    return false;
+  }
 }
 
 /**
