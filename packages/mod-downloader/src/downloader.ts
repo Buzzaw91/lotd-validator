@@ -3,6 +3,7 @@ import { createWriteStream } from "node:fs";
 import { writeFile, access, readdir, mkdir } from "node:fs/promises";
 import { join, basename } from "node:path";
 import { pipeline } from "node:stream/promises";
+import { Transform } from "node:stream";
 import { createLogger } from "@lexy/logger";
 import { NexusClient } from "@lexy/nexus-resolver";
 import type { DownloadTarget, DownloadPlan } from "./section-resolver";
@@ -96,7 +97,16 @@ export async function executeDownloads(
     });
 
     try {
-      await downloadSingleFile(target, client, downloadsDir);
+      await downloadSingleFile(target, client, downloadsDir, (bytesDownloaded, bytesTotal) => {
+        onProgress?.({
+          target,
+          status: "downloading",
+          current: i + 1,
+          total,
+          bytesDownloaded,
+          bytesTotal,
+        });
+      });
       result.completed.push(target);
 
       onProgress?.({
@@ -129,6 +139,7 @@ async function downloadSingleFile(
   target: DownloadTarget,
   client: NexusClient,
   downloadsDir: string,
+  onByteProgress?: (bytesDownloaded: number, bytesTotal: number) => void,
 ): Promise<void> {
   // 1. Get download links from Nexus API (premium)
   const links = await client.getDownloadLinks(target.nexusModId, target.fileId);
@@ -168,8 +179,26 @@ async function downloadSingleFile(
 
   const filePath = join(downloadsDir, fileName);
 
+  // Track download bytes for progress reporting
+  const contentLength = parseInt(res.headers["content-length"] as string, 10) || 0;
+  let bytesDownloaded = 0;
+  let lastProgressAt = 0;
+
+  const progressTracker = new Transform({
+    transform(chunk, _encoding, callback) {
+      bytesDownloaded += chunk.length;
+      const now = Date.now();
+      // Throttle progress updates to every 250ms
+      if (onByteProgress && (now - lastProgressAt > 250 || bytesDownloaded === contentLength)) {
+        lastProgressAt = now;
+        onByteProgress(bytesDownloaded, contentLength);
+      }
+      callback(null, chunk);
+    },
+  });
+
   const writeStream = createWriteStream(filePath);
-  await pipeline(res.body, writeStream);
+  await pipeline(res.body, progressTracker, writeStream);
 
   log.info({ fileName, filePath }, "file downloaded");
 

@@ -708,19 +708,42 @@ program
     }
 
     const client = new NexusClient({ apiKey: config.nexusApiKey });
-    const { default: ora } = await import("ora");
-    const spinner = ora("Downloading files...").start();
+
+    console.log(`\n📥 Downloading ${plan.targets.length} file(s) to ${downloadsDir}\n`);
 
     const result = await executeDownloads(plan, {
       downloadsDir,
       client,
       skipExisting: !!opts.skipExisting,
       onProgress: (event) => {
-        spinner.text = `[${event.current}/${event.total}] ${event.target.modTitle} (${event.status})`;
+        const pct = `[${event.current}/${event.total}]`;
+        const name = event.target.expectedFileName ?? event.target.matchedFileName ?? event.target.modTitle;
+        switch (event.status) {
+          case "downloading":
+            if (event.bytesDownloaded && event.bytesTotal) {
+              const pctDone = Math.round((event.bytesDownloaded / event.bytesTotal) * 100);
+              const mbDown = (event.bytesDownloaded / 1048576).toFixed(1);
+              const mbTotal = (event.bytesTotal / 1048576).toFixed(1);
+              process.stdout.write(`\r  ⏳ ${pct} ${name}: ${pctDone}% (${mbDown}/${mbTotal} MB)   `);
+            } else {
+              process.stdout.write(`\r  ⏳ ${pct} Downloading: ${name}...   `);
+            }
+            break;
+          case "complete":
+            process.stdout.write("\r" + " ".repeat(80) + "\r"); // clear progress line
+            console.log(`  ✅ ${pct} Done: ${name}`);
+            break;
+          case "skipped":
+            console.log(`  ⏭️  ${pct} Skipped: ${name} (already exists)`);
+            break;
+          case "error":
+            process.stdout.write("\r" + " ".repeat(80) + "\r");
+            console.log(`  ❌ ${pct} Failed: ${name} — ${event.error}`);
+            break;
+        }
       },
     });
 
-    spinner.stop();
     console.log(formatDownloadResult(result, plan));
   });
 
