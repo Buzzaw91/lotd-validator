@@ -56,6 +56,27 @@ export function matchModsToTasks(
   profileName: string,
   mo2Path: string,
 ): ObserverSnapshot {
+  // Filter out basegame content (DLCs, Creation Club, SKSE, known guide-created mods)
+  const BASEGAME_PREFIXES = ['DLC:', 'Creation Club:', 'SKSE:', 'Unmanaged:'];
+  const KNOWN_GUIDE_MODS = [
+    'cleaned vanilla esms',
+    'bashed patch',
+    'unmanaged: bashed patch',
+    'smashed patch',
+    'unmanaged: smashed patch',
+    'overwrite',
+  ];
+  const isBasegameOrKnown = (name: string) => {
+    if (BASEGAME_PREFIXES.some((p) => name.startsWith(p))) return true;
+    if (KNOWN_GUIDE_MODS.some((k) => name.toLowerCase().includes(k))) return true;
+    return false;
+  };
+
+  // Separate mods into user-installed and basegame
+  const userMods = installedMods.filter(
+    (m) => !m.entry.isSeparator && !isBasegameOrKnown(m.entry.name),
+  );
+
   const matchedTasks: MatchedTask[] = [];
   const matchedTaskIds = new Set<string>();
   const matchedModNames = new Set<string>();
@@ -81,9 +102,8 @@ export function matchModsToTasks(
     tasksByNormalizedTitle.set(normalized, existing);
   }
 
-  // Match each installed mod
-  for (const mod of installedMods) {
-    if (mod.entry.isSeparator) continue;
+  // Match each user-installed mod
+  for (const mod of userMods) {
 
     let matched = false;
 
@@ -173,24 +193,10 @@ export function matchModsToTasks(
     }
   }
 
-  // Build unmatched lists
-  const VANILLA_PREFIXES = ['DLC:', 'Creation Club:', 'cc'];
-  const KNOWN_GUIDE_MODS = [
-    'cleaned vanilla esms',
-    'bashed patch',
-    'unmanaged: bashed patch',
-    'smashed patch',
-    'unmanaged: smashed patch',
-    'overwrite',
-  ];
-  const unmatchedMods = installedMods
-    .filter((m) => !m.entry.isSeparator && !matchedModNames.has(m.entry.name))
-    .map((m) => m.entry.name)
-    .filter((name) => {
-      if (VANILLA_PREFIXES.some((p) => name.startsWith(p))) return false;
-      if (KNOWN_GUIDE_MODS.some((k) => name.toLowerCase().includes(k))) return false;
-      return true;
-    });
+  // Build unmatched lists (basegame already filtered out)
+  const unmatchedMods = userMods
+    .filter((m) => !matchedModNames.has(m.entry.name))
+    .map((m) => m.entry.name);
 
   const missingTasks: MissingTask[] = manifest.tasks
     .filter((t) => !matchedTaskIds.has(t.id))
@@ -216,7 +222,7 @@ export function matchModsToTasks(
     profileName,
     mo2Path,
     timestamp: new Date().toISOString(),
-    installedModCount: installedMods.filter((m) => !m.entry.isSeparator).length,
+    installedModCount: userMods.length,
     separatorCount,
     matchedTasks,
     unmatchedMods,
