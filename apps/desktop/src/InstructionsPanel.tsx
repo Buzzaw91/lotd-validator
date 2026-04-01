@@ -229,14 +229,55 @@ export default function InstructionsPanel({ sectionName }: Props) {
         {task.specialInstructions && task.specialInstructions.length > 0 && (
           <div className="space-y-2">
             <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Special Instructions</div>
-            <div className="rounded-lg border border-amber-800/40 bg-amber-900/15 p-3 space-y-2">
-              {task.specialInstructions.map((instr, i) => (
-                <div key={i} className="flex items-start gap-2 text-sm">
-                  <span className="text-amber-400 mt-0.5 shrink-0">⚙️</span>
-                  <span className="text-gray-200">{instr}</span>
+            {task.specialInstructions.map((instr, i) => {
+              // Detect "Delete the following file(s)" instructions and parse paths
+              const isDeleteList = /delete the following/i.test(instr)
+              if (isDeleteList) {
+                // Split by newlines/tabs and extract file paths
+                const paths = instr
+                  .split('\n')
+                  .map(l => l.trim())
+                  .filter(l => l.length > 0 && !l.toLowerCase().startsWith('delete'))
+
+                return (
+                  <div key={i} className="rounded-lg border border-amber-800/40 bg-amber-900/15 p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-amber-300">Delete the following files:</span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(paths.join('\n'))
+                        }}
+                        className="text-xs px-2 py-0.5 rounded bg-amber-900/40 text-amber-300 border border-amber-700/50 hover:bg-amber-800/60 transition-colors"
+                      >
+                        Copy All
+                      </button>
+                    </div>
+                    <div className="space-y-0.5">
+                      {paths.map((path, pi) => (
+                        <div
+                          key={pi}
+                          onClick={() => navigator.clipboard.writeText(path)}
+                          className="text-xs font-mono text-gray-300 bg-[#1e1e2e] rounded px-2 py-1 cursor-pointer hover:bg-[#313244] hover:text-white transition-colors border border-transparent hover:border-amber-700/30"
+                          title="Click to copy"
+                        >
+                          {path}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              }
+
+              // Default: render as-is with line breaks
+              return (
+                <div key={i} className="rounded-lg border border-amber-800/40 bg-amber-900/15 p-3">
+                  <div className="flex items-start gap-2 text-sm">
+                    <span className="text-amber-400 mt-0.5 shrink-0">⚙️</span>
+                    <span className="text-gray-200 whitespace-pre-wrap">{instr}</span>
+                  </div>
                 </div>
-              ))}
-            </div>
+              )
+            })}
           </div>
         )}
 

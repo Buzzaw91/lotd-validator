@@ -42,8 +42,6 @@ export function buildQueue(
           warnings.push(`❌ No matching file for entry ${v.fileEntryIndex}`);
         } else if (v.status === "MANUAL") {
           warnings.push(`🔧 Manual verification needed for entry ${v.fileEntryIndex}`);
-        } else if (v.status === "PARTIAL") {
-          warnings.push(`⚡ Partial match for entry ${v.fileEntryIndex} — review recommended`);
         }
       }
 
