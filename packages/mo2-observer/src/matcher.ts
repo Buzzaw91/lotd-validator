@@ -293,13 +293,22 @@ function getExpectedVersion(task: InstallTask): string | undefined {
 }
 
 function versionsMatch(installed: string, expected: string): boolean {
-  // Normalize versions: strip leading "v", trim whitespace
-  const norm = (v: string) => v.replace(/^v/i, "").trim();
+  // Normalize versions: strip leading "v", trim whitespace, strip trailing .0 segments
+  const norm = (v: string) => {
+    let n = v.replace(/^v/i, "").trim();
+    // Strip trailing .0 segments: "3.2.0.0" → "3.2", "1.0.0" → "1"
+    n = n.replace(/(\.0)+$/, "");
+    return n;
+  };
   const a = norm(installed);
   const b = norm(expected);
 
-  // Exact match
+  // Exact match after normalization
   if (a === b) return true;
+
+  // One version starts with the other (e.g. installed "1.1" starts with expected "1")
+  // This handles the case where MO2 picks up the UPDATE file version
+  if (a.startsWith(b + ".") || b.startsWith(a + ".")) return true;
 
   // SKSE-style date versions (dYYYY.M.DD.N) should not flag a mismatch
   // against short semver versions — the user just renamed the archive
