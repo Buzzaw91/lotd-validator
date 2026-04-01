@@ -321,6 +321,7 @@ program
   .option("--section <name>", "Show only tasks in this section")
   .option("--page <slug>", "Show only tasks on this page")
   .option("--list-sections", "List available sections with task counts")
+  .option("--json", "Output as JSON (for programmatic use)")
   .action(async (opts) => {
     const config = await loadConfig();
     const manifestPath = join(config.dataDir, "manifests", "manifest.json");
@@ -382,6 +383,12 @@ program
     }
 
     const filterLabel = opts.section ? ` — "${opts.section}"` : opts.page ? ` — ${opts.page}` : "";
+
+    if (opts.json) {
+      console.log(JSON.stringify(queue));
+      return;
+    }
+
     console.log(`\n📋 Install Queue — ${queue.length} tasks${filterLabel}\n`);
 
     if (queue.length === 0) {

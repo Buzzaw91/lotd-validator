@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import '@xterm/xterm/css/xterm.css'
-import { FileSearch, Download, Eye, TerminalSquare, Settings, Play, Zap } from 'lucide-react'
+import { FileSearch, Download, Eye, TerminalSquare, Settings, Play, Zap, BookOpen } from 'lucide-react'
+import InstructionsPanel from './InstructionsPanel'
 
 const TABS = [
   { id: 'validator', label: 'Validator', icon: FileSearch },
@@ -17,6 +18,7 @@ export default function App() {
   const [sections, setSections] = useState<{ page: string; section: string; label: string }[]>([])
   const [isLoadingSections, setIsLoadingSections] = useState(false)
   const [overrideCount, setOverrideCount] = useState(0)
+  const [bottomPanel, setBottomPanel] = useState<'console' | 'instructions'>('console')
   
   const terminalRef = useRef<HTMLDivElement>(null)
   const xtermRef = useRef<Terminal>(null)
@@ -401,13 +403,33 @@ export default function App() {
             {activeTab === 'observer' && renderObserver()}
           </div>
 
-          {/* Bottom Panel: Terminal */}
+          {/* Bottom Panel: Console / Instructions toggle */}
           <div className="h-1/2 border-t border-[#313244] bg-[#11111b] flex flex-col">
-            <div className="px-4 py-2 bg-[#181825] border-b border-[#313244] flex items-center justify-between">
-              <span className="text-xs text-gray-400 font-mono flex items-center space-x-2">
-                <TerminalSquare size={14} />
-                <span>Output Console</span>
-              </span>
+            <div className="px-3 py-1.5 bg-[#181825] border-b border-[#313244] flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setBottomPanel('console')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs transition-colors ${
+                    bottomPanel === 'console'
+                      ? 'bg-[#313244] text-[#cdd6f4] font-medium'
+                      : 'text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  <TerminalSquare size={13} />
+                  Console
+                </button>
+                <button
+                  onClick={() => setBottomPanel('instructions')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs transition-colors ${
+                    bottomPanel === 'instructions'
+                      ? 'bg-[#313244] text-[#cdd6f4] font-medium'
+                      : 'text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  <BookOpen size={13} />
+                  Instructions
+                </button>
+              </div>
               {isRunning && (
                 <span className="flex items-center space-x-2 text-xs text-pink-400">
                   <span className="animate-pulse h-2 w-2 bg-pink-400 rounded-full"></span>
@@ -415,8 +437,14 @@ export default function App() {
                 </span>
               )}
             </div>
-            {/* Terminal Container */}
-            <div className="flex-1 overflow-hidden p-2" ref={terminalRef}></div>
+            {/* Console */}
+            <div className={`flex-1 overflow-hidden p-2 ${bottomPanel === 'console' ? '' : 'hidden'}`} ref={terminalRef}></div>
+            {/* Instructions */}
+            {bottomPanel === 'instructions' && (
+              <div className="flex-1 overflow-hidden">
+                <InstructionsPanel sectionName={downloadSection} />
+              </div>
+            )}
           </div>
         </div>
       </div>
