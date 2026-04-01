@@ -45,6 +45,21 @@ export interface DownloadResult {
   failed: { target: DownloadTarget; error: string }[];
 }
 
+// ── Filename helpers ───────────────────────────────────────────────
+
+const sanitizeFilename = (s: string) => s.replace(/[<>:"/\\|?*]+/g, "").replace(/\s+/g, " ").trim();
+
+/**
+ * Build a human-friendly filename: `ModName - Version [Section].ext`
+ * Uses a default `.7z` extension; caller can override with the CDN extension.
+ */
+function buildFriendlyFileName(target: DownloadTarget, ext = ".7z"): string {
+  const modName = sanitizeFilename(target.modTitle);
+  const version = target.expectedVersion ? ` - ${sanitizeFilename(target.expectedVersion)}` : "";
+  const section = target.sectionTitle ? ` [${sanitizeFilename(target.sectionTitle)}]` : "";
+  return `${modName}${version}${section}${ext}`;
+}
+
 // ── Downloader ─────────────────────────────────────────────────────
 
 /**
@@ -81,10 +96,14 @@ export async function executeDownloads(
   for (let i = 0; i < plan.targets.length; i++) {
     const target = plan.targets[i]!;
 
-    // Check if already downloaded
-    const expectedName = target.matchedFileName ?? target.expectedFileName;
-    if (skipExisting && expectedName && existingFiles.has(expectedName.toLowerCase())) {
-      log.debug({ file: expectedName }, "skipping existing file");
+    // Check if already downloaded (match both old CDN names and new friendly names)
+    const oldName = target.matchedFileName ?? target.expectedFileName;
+    const newName = buildFriendlyFileName(target);
+    if (skipExisting && (
+      (oldName && existingFiles.has(oldName.toLowerCase())) ||
+      existingFiles.has(newName.toLowerCase())
+    )) {
+      log.debug({ file: newName }, "skipping existing file");
       onProgress?.({
         target,
         status: "skipped",
@@ -201,22 +220,22 @@ async function downloadSingleFile(
     throw new Error(`CDN returned ${res.statusCode} for ${cdnUrl}`);
   }
 
-  // Determine filename from Content-Disposition or fallback to matchedFileName
-  let fileName = target.matchedFileName ?? target.expectedFileName ?? `${target.nexusModId}-${target.fileId}`;
+  // Determine CDN filename for extension extraction
+  let cdnFileName = target.matchedFileName ?? target.expectedFileName ?? `${target.nexusModId}-${target.fileId}`;
 
   const disposition = res.headers["content-disposition"];
   if (typeof disposition === "string") {
     const match = disposition.match(/filename[*]?=(?:UTF-8'')?["']?([^"';\n]+)/i);
     if (match?.[1]) {
-      fileName = decodeURIComponent(match[1]);
+      cdnFileName = decodeURIComponent(match[1]);
     }
   }
 
-  // Ensure it has an extension
-  if (!fileName.includes(".")) {
-    fileName += ".7z";
-  }
+  // Extract extension from CDN filename, fall back to .7z
+  const extMatch = cdnFileName.match(/(\.[a-zA-Z0-9]+)$/);
+  const ext = extMatch?.[1] ?? ".7z";
 
+  const fileName = buildFriendlyFileName(target, ext);
   const filePath = join(downloadsDir, fileName);
 
   // Track download bytes for progress reporting
