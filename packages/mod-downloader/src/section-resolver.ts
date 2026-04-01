@@ -5,6 +5,11 @@ import type { NexusFilesResponse } from "@lexy/nexus-resolver";
 
 const log = createLogger("section-resolver");
 
+/** Determine the Nexus game domain from task tags */
+function getGameDomain(task: InstallTask): string {
+  return task.tags.includes("CLASSIC") ? "skyrim" : "skyrimspecialedition";
+}
+
 // ── Types ──────────────────────────────────────────────────────────
 
 export interface DownloadTarget {
@@ -19,6 +24,8 @@ export interface DownloadTarget {
   expectedVersion?: string;
   matchedFileName?: string;
   matchedVersion?: string;
+  /** Nexus game domain: "skyrimspecialedition" or "skyrim" (classic) */
+  gameDomain: string;
   /** Validation confidence (0-1) */
   confidence: number;
 }
@@ -135,6 +142,7 @@ export function buildDownloadPlan(
         expectedVersion: entry.expectedVersion,
         matchedFileName: validation?.matchedFileName,
         matchedVersion: validation?.matchedVersion,
+        gameDomain: getGameDomain(task),
         confidence: validation?.confidence ?? 0,
       });
     }
@@ -238,10 +246,11 @@ export async function resolveDownloadPlan(
     const entry = task.fileEntries[fileIndex]!;
 
     try {
-      const cacheKey = `mod-files-${entry.nexusModId}`;
+      const domain = getGameDomain(task);
+      const cacheKey = `mod-files-${domain}-${entry.nexusModId}`;
       let filesResponse = await cache.get<NexusFilesResponse>(cacheKey);
       if (!filesResponse) {
-        filesResponse = await client.getModFiles(entry.nexusModId!);
+        filesResponse = await client.getModFiles(entry.nexusModId!, domain);
         await cache.set(cacheKey, filesResponse);
       }
 
@@ -260,6 +269,7 @@ export async function resolveDownloadPlan(
           expectedVersion: entry.expectedVersion,
           matchedFileName: result.matchedFile.file_name,
           matchedVersion: result.matchedFile.version,
+          gameDomain: getGameDomain(task),
           confidence: result.confidence,
         });
         resolved++;

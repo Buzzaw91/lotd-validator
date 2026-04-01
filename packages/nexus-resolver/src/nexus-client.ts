@@ -61,16 +61,16 @@ export class NexusClient {
   }
 
   /** Get mod metadata */
-  async getModInfo(modId: number): Promise<NexusModInfo> {
+  async getModInfo(modId: number, gameDomain = GAME_DOMAIN): Promise<NexusModInfo> {
     return this.apiRequest<NexusModInfo>(
-      `${NEXUS_API_BASE}/games/${GAME_DOMAIN}/mods/${modId}.json`,
+      `${NEXUS_API_BASE}/games/${gameDomain}/mods/${modId}.json`,
     );
   }
 
   /** Get all files for a mod */
-  async getModFiles(modId: number): Promise<NexusFilesResponse> {
+  async getModFiles(modId: number, gameDomain = GAME_DOMAIN): Promise<NexusFilesResponse> {
     return this.apiRequest<NexusFilesResponse>(
-      `${NEXUS_API_BASE}/games/${GAME_DOMAIN}/mods/${modId}/files.json`,
+      `${NEXUS_API_BASE}/games/${gameDomain}/mods/${modId}/files.json`,
     );
   }
 
@@ -78,9 +78,9 @@ export class NexusClient {
    * Get download links for a specific file (premium only).
    * Returns an array of CDN mirror URLs.
    */
-  async getDownloadLinks(modId: number, fileId: number): Promise<NexusDownloadLink[]> {
+  async getDownloadLinks(modId: number, fileId: number, gameDomain = GAME_DOMAIN): Promise<NexusDownloadLink[]> {
     return this.apiRequest<NexusDownloadLink[]>(
-      `${NEXUS_API_BASE}/games/${GAME_DOMAIN}/mods/${modId}/files/${fileId}/download_link.json`,
+      `${NEXUS_API_BASE}/games/${gameDomain}/mods/${modId}/files/${fileId}/download_link.json`,
     );
   }
 

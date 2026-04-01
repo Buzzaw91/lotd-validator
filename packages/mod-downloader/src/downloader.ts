@@ -207,7 +207,7 @@ async function downloadSingleFile(
   onByteProgress?: (bytesDownloaded: number, bytesTotal: number) => void,
 ): Promise<void> {
   // 1. Get download links from Nexus API (premium)
-  const links = await client.getDownloadLinks(target.nexusModId, target.fileId);
+  const links = await client.getDownloadLinks(target.nexusModId, target.fileId, target.gameDomain);
   if (!links || links.length === 0) {
     throw new Error(`No download links returned for mod ${target.nexusModId} file ${target.fileId}`);
   }
@@ -308,9 +308,9 @@ async function tryResolveAndRetry(
     if (!entry || !entry.nexusModId) return false;
 
     // Force-refresh the file listing (bypass cache)
-    const filesResponse = await options.client.getModFiles(entry.nexusModId);
+    const filesResponse = await options.client.getModFiles(entry.nexusModId, target.gameDomain);
     const cache = new MetadataCache(options.cacheDir);
-    await cache.set(`mod-files-${entry.nexusModId}`, filesResponse);
+    await cache.set(`mod-files-${target.gameDomain}-${entry.nexusModId}`, filesResponse);
 
     const result = matchFile(entry, filesResponse.files);
     if (!result.matchedFile) {
