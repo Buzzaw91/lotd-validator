@@ -18,6 +18,7 @@ export interface DownloadTarget {
   expectedFileName?: string;
   expectedVersion?: string;
   matchedFileName?: string;
+  matchedVersion?: string;
   /** Validation confidence (0-1) */
   confidence: number;
 }
@@ -133,6 +134,7 @@ export function buildDownloadPlan(
         expectedFileName: entry.expectedFileName,
         expectedVersion: entry.expectedVersion,
         matchedFileName: validation?.matchedFileName,
+        matchedVersion: validation?.matchedVersion,
         confidence: validation?.confidence ?? 0,
       });
     }
@@ -257,6 +259,7 @@ export async function resolveDownloadPlan(
           expectedFileName: entry.expectedFileName,
           expectedVersion: entry.expectedVersion,
           matchedFileName: result.matchedFile.file_name,
+          matchedVersion: result.matchedFile.version,
           confidence: result.confidence,
         });
         resolved++;

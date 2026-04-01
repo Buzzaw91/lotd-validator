@@ -50,14 +50,20 @@ export interface DownloadResult {
 const sanitizeFilename = (s: string) => s.replace(/[<>:"/\\|?*]+/g, "").replace(/\s+/g, " ").trim();
 
 /**
- * Build a human-friendly filename: `ModName - Version [Section].ext`
- * Uses a default `.7z` extension; caller can override with the CDN extension.
+ * Build a human-friendly filename: `ModName - FileName - Version.ext`
+ * When the file entry name differs from the mod title, it's included to
+ * disambiguate multiple files from the same mod (e.g. "Voices EN - Part 1").
+ * Uses matchedVersion (actual Nexus version) with fallback to expectedVersion.
  */
 function buildFriendlyFileName(target: DownloadTarget, ext = ".7z"): string {
   const modName = sanitizeFilename(target.modTitle);
-  const version = target.expectedVersion ? ` - ${sanitizeFilename(target.expectedVersion)}` : "";
-  const section = target.sectionTitle ? ` [${sanitizeFilename(target.sectionTitle)}]` : "";
-  return `${modName}${version}${section}${ext}`;
+  // Include file entry name if it differs from the mod title
+  const entryName = target.expectedFileName && sanitizeFilename(target.expectedFileName) !== modName
+    ? ` - ${sanitizeFilename(target.expectedFileName)}`
+    : "";
+  const version = target.matchedVersion ?? target.expectedVersion;
+  const versionPart = version ? ` - ${sanitizeFilename(version)}` : "";
+  return `${modName}${entryName}${versionPart}${ext}`;
 }
 
 // ── Downloader ─────────────────────────────────────────────────────
@@ -269,7 +275,7 @@ async function downloadSingleFile(
     `fileID=${target.fileId}`,
     "url=",
     `modName=${target.modTitle}`,
-    `version=${target.expectedVersion ?? ""}`,
+    `version=${target.matchedVersion ?? target.expectedVersion ?? ""}`,
     "newestVersion=",
     "category=",
     "repository=Nexus",
@@ -327,6 +333,7 @@ async function tryResolveAndRetry(
     // Mutate the target with the new ID and retry
     target.fileId = newFileId;
     target.matchedFileName = result.matchedFile.file_name;
+    target.matchedVersion = result.matchedFile.version;
 
     await downloadSingleFile(target, options.client, downloadsDir, onByteProgress);
     return true;
