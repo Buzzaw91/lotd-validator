@@ -27,6 +27,11 @@ export function matchFile(
 ): MatchResult {
   const notes: string[] = [];
 
+  // Prefer files with a real category (MAIN, OPTIONAL, etc.) over null-category
+  // files, which are typically dead/hidden uploads that return 404 on download.
+  const downloadable = nexusFiles.filter((f) => f.category_name !== null);
+  const candidates = downloadable.length > 0 ? downloadable : nexusFiles;
+
   // ── 1. Exact fileId match ─────────────────────────────────────────
   if (entry.nexusFileId) {
     const exact = nexusFiles.find((f) => f.file_id === entry.nexusFileId);
@@ -39,7 +44,7 @@ export function matchFile(
 
   // ── 2. Exact filename + exact version ─────────────────────────────
   if (entry.expectedFileName && entry.expectedVersion) {
-    const exact = nexusFiles.find(
+    const exact = candidates.find(
       (f) =>
         normalizeFilename(f.file_name) === normalizeFilename(entry.expectedFileName!) &&
         normalizeVersion(f.version) === normalizeVersion(entry.expectedVersion!),
@@ -56,7 +61,7 @@ export function matchFile(
 
   // ── 3. Exact version + fuzzy filename ─────────────────────────────
   if (entry.expectedVersion) {
-    const versionMatches = nexusFiles.filter(
+    const versionMatches = candidates.filter(
       (f) => normalizeVersion(f.version) === normalizeVersion(entry.expectedVersion!),
     );
 
@@ -92,7 +97,7 @@ export function matchFile(
 
   // ── 4. Filename-only candidates ───────────────────────────────────
   if (entry.expectedFileName) {
-    const nameCandidates = nexusFiles.filter((f) =>
+    const nameCandidates = candidates.filter((f) =>
       fuzzyFilenameMatch(f.file_name, entry.expectedFileName!),
     );
 
