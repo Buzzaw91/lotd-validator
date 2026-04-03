@@ -50,12 +50,17 @@ export interface DownloadResult {
 const sanitizeFilename = (s: string) => s.replace(/[<>:"/\\|?*]+/g, "").replace(/\s+/g, " ").trim();
 
 /**
- * Build a human-friendly filename: `ModName - FileName - Version.ext`
+ * Build a human-friendly filename: `NNN-F ModName - FileName - Version.ext`
+ *   NNN = zero-padded mod order within section (guide install order)
+ *   F   = file entry index within the mod (1-based)
  * When the file entry name differs from the mod title, it's included to
  * disambiguate multiple files from the same mod (e.g. "Voices EN - Part 1").
  * Uses matchedVersion (actual Nexus version) with fallback to expectedVersion.
  */
 function buildFriendlyFileName(target: DownloadTarget, ext = ".7z"): string {
+  const order = String(target.orderIndex).padStart(3, "0");
+  const fileNum = target.fileEntryIndex + 1; // 1-based
+  const prefix = `${order}-${fileNum}`;
   const modName = sanitizeFilename(target.modTitle);
   // Include file entry name if it differs from the mod title
   const entryName = target.expectedFileName && sanitizeFilename(target.expectedFileName) !== modName
@@ -63,7 +68,7 @@ function buildFriendlyFileName(target: DownloadTarget, ext = ".7z"): string {
     : "";
   const version = target.matchedVersion ?? target.expectedVersion;
   const versionPart = version ? ` - ${sanitizeFilename(version)}` : "";
-  return `${modName}${entryName}${versionPart}${ext}`;
+  return `${prefix} ${modName}${entryName}${versionPart}${ext}`;
 }
 
 // ── Downloader ─────────────────────────────────────────────────────
@@ -102,13 +107,19 @@ export async function executeDownloads(
   for (let i = 0; i < plan.targets.length; i++) {
     const target = plan.targets[i]!;
 
-    // Check if already downloaded (match both old CDN names and new friendly names)
+    // Check if already downloaded (match old CDN names, new friendly names,
+    // and names with different number prefixes from prior runs)
     const oldName = target.matchedFileName ?? target.expectedFileName;
     const newName = buildFriendlyFileName(target);
-    if (skipExisting && (
+    // Build the name without the number prefix for fuzzy matching
+    const nameWithoutPrefix = newName.replace(/^\d{3}-\d+ /, "");
+    const alreadyExists = skipExisting && (
       (oldName && existingFiles.has(oldName.toLowerCase())) ||
-      existingFiles.has(newName.toLowerCase())
-    )) {
+      existingFiles.has(newName.toLowerCase()) ||
+      // Match any existing file that ends with the same mod-name portion
+      [...existingFiles].some((f) => f.endsWith(nameWithoutPrefix.toLowerCase()) || f.replace(/^\d{3}-\d+ /, "") === nameWithoutPrefix.toLowerCase())
+    );
+    if (alreadyExists) {
       log.debug({ file: newName }, "skipping existing file");
       onProgress?.({
         target,

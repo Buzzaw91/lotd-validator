@@ -14,6 +14,8 @@ function getGameDomain(task: InstallTask): string {
 
 export interface DownloadTarget {
   taskId: string;
+  /** Guide install order (1-based within section) */
+  orderIndex: number;
   modTitle: string;
   sectionTitle: string;
   pageSlug: string;
@@ -108,7 +110,10 @@ export function buildDownloadPlan(
   let skippedManual = 0;
   let skippedNoFileId = 0;
 
+  let modIndex = 0;
+
   for (const task of tasks) {
+    modIndex++;
     for (let i = 0; i < task.fileEntries.length; i++) {
       const entry = task.fileEntries[i]!;
       const validation = validationIndex.get(`${task.id}:${i}`);
@@ -132,6 +137,7 @@ export function buildDownloadPlan(
 
       targets.push({
         taskId: task.id,
+        orderIndex: modIndex,
         modTitle: task.modTitle,
         sectionTitle: task.sectionTitle,
         pageSlug: task.pageSlug,
@@ -259,6 +265,7 @@ export async function resolveDownloadPlan(
       if (result.matchedFile) {
         newTargets.push({
           taskId: task.id,
+          orderIndex: task.orderIndex,
           modTitle: task.modTitle,
           sectionTitle: task.sectionTitle,
           pageSlug: task.pageSlug,
