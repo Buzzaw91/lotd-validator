@@ -226,6 +226,10 @@ export async function resolveDownloadPlan(
     return true;
   });
 
+  // Build section-relative index: taskId → 1-based position within section
+  const sectionIndexMap = new Map<string, number>();
+  tasksInSection.forEach((t, idx) => sectionIndexMap.set(t.id, idx + 1));
+
   // Find file entries that are missing from the plan
   const existingKeys = new Set(plan.targets.map((t) => `${t.taskId}:${t.fileEntryIndex}`));
   const missing: Array<{ task: InstallTask; fileIndex: number }> = [];
@@ -265,7 +269,7 @@ export async function resolveDownloadPlan(
       if (result.matchedFile) {
         newTargets.push({
           taskId: task.id,
-          orderIndex: task.orderIndex,
+          orderIndex: sectionIndexMap.get(task.id) ?? 0,
           modTitle: task.modTitle,
           sectionTitle: task.sectionTitle,
           pageSlug: task.pageSlug,
